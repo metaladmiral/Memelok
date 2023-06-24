@@ -7,7 +7,7 @@ $domain = count($server)-1;
 $host = count($server)-2;
 $server = $server[$host].".".$server[$domain];
 */
-$server = "memelok.tf";
+$server = "localhost/memelok";
 
 setcookie('PSID', "", time()-3600, "/");
 setcookie('LID', "", time()-3600, "/");

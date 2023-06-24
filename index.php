@@ -3,12 +3,19 @@
 session_start();
 ob_start();
 
-include 'bscripts/actions/dbh.php';
+include './dbh.php';
 
-$server = explode('.', $_SERVER['SERVER_NAME']);
+if(strpos('Android',$_SERVER['HTTP_USER_AGENT'])==true) {
+	header('Location: http://mobile.localhost/memelok');
+}
+
+$dbname = 'usr_'.$_SESSION['UID'];
+
+/*$server = explode('.', $_SERVER['SERVER_NAME']);
 $domain = count($server)-1;
 $host = count($server)-2;
-$server = $server[$host].".".$server[$domain];
+$server = $server[$host].".".$server[$domain];*/
+$server = "localhost/memelok";
 
 if(isset($_COOKIE['LID'])) {
 	$lid = $_COOKIE['LID'];
@@ -26,6 +33,40 @@ else {
 	header('Location: http://'.$server.'/login');
 }
 
+/*
+function getUserIP()
+{
+    // Get real visitor IP behind CloudFlare network
+    if (isset($_SERVER["HTTP_CF_CONNECTING_IP"])) {
+              $_SERVER['REMOTE_ADDR'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+              $_SERVER['HTTP_CLIENT_IP'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+    }
+    $client  = @$_SERVER['HTTP_CLIENT_IP'];
+    $forward = @$_SERVER['HTTP_X_FORWARDED_FOR'];
+    $remote  = $_SERVER['REMOTE_ADDR'];
+
+    if(filter_var($client, FILTER_VALIDATE_IP))
+    {
+        $ip = $client;
+    }
+    elseif(filter_var($forward, FILTER_VALIDATE_IP))
+    {
+        $ip = $forward;
+    }
+    else
+    {
+        $ip = $remote;
+    }
+
+    return $ip;
+}
+
+$ip = getUserIP();
+*/
+
+$query_f_mess = db::mconnect($dbname)->prepare("SELECT count(*) as count FROM `chathistory` WHERE `last_read`=0");
+$query_f_mess->execute();
+$mess_count = $query_f_mess->fetch(PDO::FETCH_ASSOC)['count'];
 
 ?>
 <!DOCTYPE html>
@@ -35,19 +76,24 @@ else {
 	<title>Home - Memelok | Memes | Best Indian memes | Best Memes Collection</title>
 	<link rel="stylesheet" type="text/css" href="css/index.css">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="fontawesome/css/all.min.css">
-	<script src="scripts/jquery.js"></script>
+	<link rel="stylesheet" href="http://<?php echo $server; ?>/fontawesome/css/all.min.css">
+	<script defer src="http://<?php echo $server; ?>/scripts/jquery.js"></script>
 	<meta name="description" content="Log in or Create an account on Memelok. Get the best Indian memes and funny memes from best memers around India, chat with your friends">
-	<meta name="keywords" content="home, memelok home, home page, memelok, memes, meme, best indian memes, best memes collection, funny memes, best memes, adult memes">
+	<meta name="keywords" content="login, memelok login, login page, sign in, sign up, create an account, memelok, memes, meme, best indian memes, best memes collection, funny memes, best memes, adult memes, memes in hindi, exam memes, funny memes in hindi, latest memes, trending memes, dark memes, instagram memes, got memes, the office memes, life memes, tik tok memes, best memes ever, single memes, popular memes, sarcastic memes, hilarious memes, comedy memes, bollywood memes, new memes, funny friend memes, funny love memes, cartoon memes, food memes, english memes, science memes, physics memes, college memes, donald trump memes, savage memes, cute memes, doctor memes, facebook memes, programming memes, football memes">
 	<meta name="robots" content="index, follow">
+	<meta name="revisit-after" content="1 days">
+	<meta name="author" content="Prakhar Sinha, Pratham Garg">
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta name="language" content="English">
+
+	<link rel="apple-touch-icon" sizes="57x57" href="http://<?php echo $server; ?>/icon/apple-icon-57x57.png"><link rel="apple-touch-icon" sizes="60x60" href="http://<?php echo $server; ?>/icon/apple-icon-60x60.png"><link rel="apple-touch-icon" sizes="72x72" href="http://<?php echo $server; ?>/icon/apple-icon-72x72.png"><link rel="apple-touch-icon" sizes="76x76" href="http://<?php echo $server; ?>/icon/apple-icon-76x76.png"><link rel="apple-touch-icon" sizes="114x114" href="http://<?php echo $server; ?>/icon/apple-icon-114x114.png"><link rel="apple-touch-icon" sizes="120x120" href="http://<?php echo $server; ?>/icon/apple-icon-120x120.png"><link rel="apple-touch-icon" sizes="144x144" href="http://<?php echo $server; ?>/icon/apple-icon-144x144.png"><link rel="apple-touch-icon" sizes="152x152" href="http://<?php echo $server; ?>/icon/apple-icon-152x152.png"><link rel="apple-touch-icon" sizes="180x180" href="http://<?php echo $server; ?>/icon/apple-icon-180x180.png"><link rel="icon" type="image/png" sizes="192x192"  href="http://<?php echo $server; ?>/icon/android-icon-192x192.png"><link rel="icon" type="image/png" sizes="32x32" href="http://<?php echo $server; ?>/icon/favicon-32x32.png"><link rel="icon" type="image/png" sizes="96x96" href="http://<?php echo $server; ?>/icon/favicon-96x96.png"><link rel="icon" type="image/png" sizes="16x16" href="http://<?php echo $server; ?>/icon/favicon-16x16.png">
+
+	<script>if(window.innerWidth<=650){window.location = 'http://mobile.localhost/memelok';}</script>
 
 </head>
 <body>
 
 	<!-- nav dropdowns !-->
-	
 		<a class="downloadmeme"></a>
 
 		<div class="overlay_responsive">
@@ -55,7 +101,7 @@ else {
 		</div>
 
 		<audio id="message_noti">
-		  <source src="sounds/insight.ogg" type="audio/ogg">
+		  <source src="http://<?php echo $server; ?>/sounds/insight.ogg" type="audio/ogg">
 		</audio>
 
 		<div class="search_resp_dropdown nav_dropdown" style="display: none;">
@@ -99,7 +145,7 @@ else {
 										}, 250);
 									}
 								}
-								xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/freq.php");
+								xml.open("POST", "http://<?php echo $server; ?>/bscripts/load/freq.php");
 								xml.withCredentials = true;
 								var formdata = new FormData();
 								formdata.append("which", "getfreqs");
@@ -143,7 +189,7 @@ else {
 								}
 							}
 						}
-						xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/markallnotiread.php");
+						xml.open("POST", "http://<?php echo $server; ?>/bscripts/actions/markallnotiread.php");
 						xml.withCredentials = true;
 						xml.send();
 					}
@@ -172,7 +218,7 @@ else {
 									}, 250);
 								}
 							}
-							xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/notifications.php");
+							xml.open("POST", "http://<?php echo $server; ?>/bscripts/load/notifications.php");
 							xml.withCredentials = true;
 							var formdata = new FormData();
 							formdata.append("which", "getnoti");
@@ -246,7 +292,7 @@ else {
 
 			<div class='center_more_' style="color: #00b300;">&bull;</div>
 
-			<div class="right_more_" onclick="chatanimation();"><i class="far fa-exchange-alt" style="cursor: pointer;"></i></div>
+			<div class="right_more_" onclick="chatanimation();"><i class="far fa-exchange-alt" id='<?php if($mess_count>0) { ?>active<?php } ?>' style="cursor: pointer;"></i></div>
 
 		</div>
 
@@ -273,19 +319,22 @@ else {
 
 					<i class="fas fa-arrow-left" onclick="removechatwindow(document.querySelector('.chatwindow').getAttribute('data-which'));"></i>
 					
-					<div class="dp"><img src="" alt="pop"></div>
+					<div class="dp"><img src="" alt="User pic" style='object-fit:cover;'></div>
 					&nbsp;&nbsp;
 					<span style="font-family: ;font-size: 13px;" id='chat_username'>Username</span>
 					&nbsp;&nbsp;
 					<span style="color: #00b300;font-size: 20px;" class="onlinestatus" style="display: none;">&bull;</span>
+                	&nbsp;&nbsp;
+                	<span style="float: right;color: green;font-size: 11px;display: none;" id='user_typing'>Typing...</span>
 
 				</div>
 
 				<div class="mainchat">
 					
 					<div class="loader spinner"></div>
+                
 
-					<div class="maindata">
+					<div class="maindata" onscroll="">
 						<ul>
 							
 						</ul>
@@ -296,10 +345,11 @@ else {
 
 				<div class="bottom_chatm">
 						
-					<input type="text" placeholder="Enter a Message" id='chat_mess_input' onkeyup="messevent(event);">
+					<input type="text" placeholder="Enter a Message" id='chat_mess_input' onkeyup="messevent(event);" onfocusout="send_typing(0);">
 
 					<script>
 						function messevent(e) {
+                        	send_typing(1);
 							if(e.code=='Enter') {
 								sendmess();
 								document.querySelector('#chat_mess_input').value = "";
@@ -329,7 +379,7 @@ else {
 		<div class="nav_main">
 
 			<div class="logo">
-				<img src="img/logo_dev1.png" alt="">
+				<img src="http://<?php echo $server; ?>/img/logo_dev1.png" alt="">
 			</div>
 
 			<div class="main_spinner">
@@ -426,11 +476,10 @@ else {
 
 						}
 					}
-					xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/loadposts.php");
+					xml.open("POST", "http://<?php echo $server; ?>/bscripts/load/loadposts.php");
 					xml.withCredentials = true;
 					var formdata = new FormData();
 					formdata.append('px', window.innerWidth+"x"+window.innerHeight);
-					
 					if(f_data==undefined || f_data==0) {
 						f_data = {limit:8, offset:0, datebefore:2, do:1};
 						formdata.append('f_data', JSON.stringify(f_data));
@@ -508,8 +557,8 @@ else {
 
 				<div class="ad">
 					
-					<div id='morelinks'><a href="/about-us" target="_blank" style="text-decoration: none;"><span>About</span></a> &bull; <a href="/terms" target="_blank" style="text-decoration: none;"><span>Terms</span></a> &bull; <a href="/terms" target="_blank" style="text-decoration: none;"><span style="">Give us a Feedback</span></a></div>
-					<span style="font-size: 12px;color: gray;">A PS Production &copy; <?php echo date('Y'); ?>. </span>	
+					<div id='morelinks'><a href="/about-us" target="_blank" style="text-decoration: none;"><span>About</span></a> &bull; <a href="/terms" target="_blank" style="text-decoration: none;"><span>Terms</span></a> &bull; <a href="/help-us-to-improve" target="_blank" style="text-decoration: none;"><span style="">Give us a Feedback</span></a></div>
+					<span style="font-size: 12px;color: gray;">Memelok &copy; <?php echo date('Y'); ?>. </span>	
 					<br>
 					<span style="font-size: 12px;color: #b3b3b3;">All rights reserved.</span>
 
@@ -573,1955 +622,44 @@ else {
 		</div>
 
 	</div>
+	
+	<script>function dropdownaction(e){var t="",n=document.querySelector(".main_spinner"),o=e;n.style.display="flex";try{document.querySelector(".search_overlay").style.display="none"}catch(e){}if("logout"==e)t="logout.php",clearInterval(updateconteinterval),localStorage.clear(),setTimeout(function(){n.style.display="none",window.location="http://localhost/memelok/logout.php"},900);else{t="http://<?php echo $server; ?>/bscripts/"+e+".php","profile"==e&&(t="http://<?php echo $server; ?>/bscripts/"+e+".php?id=<?php echo $_SESSION['UID']; ?>");var r=new XMLHttpRequest;r.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var t=this.responseText;setTimeout(function(){"settings"==e&&window.innerWidth<950&&window.innerWidth>650?(document.querySelector(".overlay_responsive").innerHTML="",document.querySelector(".overlay_responsive").style.display="flex",n.style.display="none",document.querySelector(".overlay_responsive").innerHTML=t):(document.querySelector(".overlay").innerHTML="",document.querySelector(".overlay").style.display="block",n.style.display="none",document.querySelector(".overlay").innerHTML=t,"mypages"==o&&load_mypages(),setTimeout(function(){document.querySelector("#ico3 i").style.color="rgba(0, 0, 0, 0.5)",document.querySelector("#ico3 .hghlgtr").style.background="gray",document.querySelector(".usrstngs_dropdown").style.display="none",document.querySelector(".nav_main").style.borderBottom="1px solid rgba(0, 0, 0, 0.20)",document.querySelector("#ico3").setAttribute("cdata","1"),document.querySelector("#ico3").setAttribute("onmouseout","remove_hover_ico('ico3')")},4500))},1225)}},r.open("POST",t),r.withCredentials=!0,r.send()}}function usrncheck(){document.querySelector(".right_1 .spinner").style.display="none",document.querySelector(".right_1 #usrnavl").style.display="none",document.querySelector(".right_1 #usrnnavl").style.display="none";var e=document.querySelector(".right_1 .username input").value;if("<?php echo $_SESSION['username']; ?>"==e)document.querySelector(".right_1 .username input").setAttribute("toupdate","0");else if(document.querySelector(".right_1 #usrnavl").style.display="none",document.querySelector(".right_1 .spinner").style.display="none",document.querySelector(".right_1 .username input").setAttribute("toupdate","0"),document.querySelector(".right_1 #usrnnavl").style.display="none",e.length>=7&&e.length<=18){document.querySelector(".right_1 .spinner").style.display="block";var t=new XMLHttpRequest;t.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;"1"==e?(document.querySelector(".right_1 .spinner").style.display="none",document.querySelector(".right_1 #usrnnavl").style.display="none",document.querySelector(".right_1 .username input").setAttribute("toupdate","1"),document.querySelector(".right_1 #usrnavl").style.display="block"):"0"==e?(document.querySelector(".right_1 #usrnavl").style.display="none",document.querySelector(".right_1 .spinner").style.display="none",document.querySelector(".right_1 .username input").setAttribute("toupdate","0"),document.querySelector(".right_1 #usrnnavl").style.display="block"):(document.querySelector(".right_1 #usrnavl").style.display="none",document.querySelector(".right_1 .spinner").style.display="none",document.querySelector(".right_1 #usrnnavl").style.display="block",document.querySelector(".right_1 .username input").setAttribute("toupdate","0"),alertmain(e),console.log(e))}},t.open("POST","http://<?php echo $server; ?>/bscripts/usrncheck.php"),t.withCredentials=!0;var n=new FormData;n.append("value",e),t.send(n)}else document.querySelector(".right_1 .username input").setAttribute("toupdate","0")}function accept_request(e,t){document.querySelector("#overlay_"+t).style.display="flex";var n=new XMLHttpRequest;n.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var n=this.responseText;if(1==n){setTimeout(function(){document.querySelector("#freq-items_"+t+" #accept_request").innerHTML="Accepted &#10004;",document.querySelector("#freq-items_"+t+" #accept_request").style.width="70px",document.querySelector("#freq-items_"+t+" #accept_request").setAttribute("disabled","true"),document.querySelector("#freq-items_"+t+" #accept_request").style.cursor="auto",document.querySelector("#freq-items_"+t+" #decline_request").setAttribute("disabled","true"),document.querySelector("#freq-items_"+t+" #decline_request").style.cursor="auto",document.querySelector("#freq-items_"+t+" #accept_request").removeAttribute("onclick"),document.querySelector("#freq-items_"+t+" #decline_request").removeAttribute("onclick"),document.querySelector("#overlay_"+t).style.display="none"},650);var o=new XMLHttpRequest;o.onreadystatechange=function(){4==this.readyState&&this.status};var r=new FormData;r.append("key",e),r.append("which","sendnoti"),r.append("content","<?php echo $_SESSION['username']; ?> accepted your friend request."),o.open("POST","http://<?php echo $server; ?>/bscripts/load/notifications.php"),o.withCredentials=!0,o.send(r)}else alertmain("An error Occured!"),console.log(n)}},n.open("POST","http://<?php echo $server; ?>/bscripts/load/freq.php"),n.withCredentials=!0;var o=new FormData;o.append("which","accept"),o.append("key",e),n.send(o)}function openchat(e,t,n,o,r){var s=document.querySelector("#"+r).getAttribute("data_cid");document.querySelector(".chatwindow .top .dp img").setAttribute("src","http://<?php echo $server; ?>/img_users/"+n),document.querySelector(".chatwindow .top #chat_username").innerHTML=e,document.querySelector(".chatwindow").setAttribute("data-username",e),document.querySelector(".chatwindow").setAttribute("data-uid",t),document.querySelector(".chatwindow").setAttribute("data-fullname",o),document.querySelector(".chatwindow").setAttribute("data-cid",s),document.querySelector(".chatwindow").style.display="block",document.querySelector(".onlinefrnds #line").setAttribute("data-value","Chat window"),document.querySelector(".chatwindow .mainchat .maindata ul").innerHTML="",loadchat(t,"<?php echo $_SESSION['UID']; ?>",e);var a=new XMLHttpRequest;a.onreadystatechange=function(){200==this.status&&this.readyState};var c=new FormData;c.append("uidf",t),c.append("uidm","<?php echo $_SESSION['UID']; ?>"),c.append("updatelmess","1"),a.open("POST","http://<?php echo $server; ?>/bscripts/chat/change_last_message.php"),a.withCredentials=!0,a.send(c),getcidinterval=setInterval(function(){var e=new XMLHttpRequest,t=document.querySelector(".chatwindow").getAttribute("data-uid");e.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var e=JSON.parse(this.responseText),t=e.cid,n=e.online;document.querySelector(".chatwindow").setAttribute("data-cid",t),1==n?document.querySelector(".chatwindow .top .onlinestatus").style.display="block":(document.querySelector(".chatwindow .top .onlinestatus").style.display="none",document.querySelector("#user_typing").style.display="none");}};var n=new FormData;n.append("uid",t),e.open("POST","http://<?php echo $server; ?>/bscripts/chat/getcid.php"),e.withCredentials=!0,e.send(n)},800),updatelmesinterval=setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){200==this.status&&this.readyState};var n=new FormData;n.append("uidf",t),n.append("uidm","<?php echo $_SESSION['UID']; ?>"),n.append("updatelmess","1"),e.open("POST","http://<?php echo $server; ?>/bscripts/chat/change_last_message.php"),e.withCredentials=!0,e.send(n)},3500)}document.addEventListener("readystatechange",e=>{"complete"===e.target.readyState&&(document.querySelector("#offonchatspin").style.display="block",document.querySelector(".postloader").style.display="block",localStorage.setItem("uid","<?php echo $_SESSION['UID']; ?>"),setTimeout(function(){loadlazyposts()},800),setTimeout(function(){loadlazychat()},900),setTimeout(function(){loadlazypgsugg()},900),setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){if(4==this.readyState&&200==this.status&&"<?php echo $_COOKIE['PHPSESSID']; ?>"!=this.responseText){confirm("A computer has loggedin from your account. You are being logged out.");window.location="http://localhost/memelok/logout.php"}},e.open("GET","http://<?php echo $server; ?>/bscripts/actions/chksessid.php"),e.withCredentials=!0,e.send()},1e4),update_freqs())});</script><script>
+ 	var dp_change, getcidinterval,updatelmesinterval,loadchatinterval,loadchathistoryinterval,updateconteinterval;function update_freqs(e){var t=new XMLHttpRequest;t.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var t=this.responseText;null!=e&&t!=localStorage.getItem("freqs_count")&&document.querySelector("#ico1 i").classList.add("active"),localStorage.setItem("freqs_count",t)}},t.open("GET","http://<?php echo $server; ?>/bscripts/load/update_freqs.php"),t.withCredentials=!0,t.send()}function update_content(){var e=new XMLHttpRequest;e.onreadystatechange=function(){if(this.status=4==this.readyState){var e=this.responseText,t=JSON.parse(e);t.noti_count>t.oldnoticount&&document.querySelector("#ico2 i").classList.add("active")}};var t=document.querySelector(".left_divider .top_heading").getAttribute("state"),o=new FormData;o.append("state",t),e.open("POST","http://<?php echo $server; ?>/bscripts/load/update_content.php"),e.withCredentials=!0,e.send(o)}function hover_ico(e){if("ico1"==e){document.querySelector("#ico1");var t=document.querySelector("#ico1 i"),o=document.querySelector("#ico1 .hghlgtr")}else if("ico2"==e)document.querySelector("#ico2"),t=document.querySelector("#ico2 i"),o=document.querySelector("#ico2 .hghlgtr");else document.querySelector("#ico3"),t=document.querySelector("#ico3 i"),o=document.querySelector("#ico3 .hghlgtr");t.style.color="var(--hover-color)",o.style.background="var(--hover-color)"}function remove_hover_ico(e){if("ico1"==e){document.querySelector("#ico1");var t=document.querySelector("#ico1 i"),o=document.querySelector("#ico1 .hghlgtr")}else if("ico2"==e)document.querySelector("#ico2"),t=document.querySelector("#ico2 i"),o=document.querySelector("#ico2 .hghlgtr");else document.querySelector("#ico3"),t=document.querySelector("#ico3 i"),o=document.querySelector("#ico3 .hghlgtr");t.style.color="rgba(0, 0, 0, 0.5)",o.style.background="gray"}function loadlazypgsugg(){var e=new XMLHttpRequest;document.querySelector(".pgsugg .spinner").style.display="none",e.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;document.querySelector(".pgsugg ul").innerHTML=e}};var t=new FormData;e.open("POST","http://<?php echo $server; ?>/bscripts/load/pgsugg.php"),e.withCredentials=!0,e.send(t)}function alertmain(e){document.querySelector(".alert_main .info_content span").innerHTML=e,document.querySelector(".alert_main").style.display="block",setTimeout(function(){document.querySelector(".alert_main").style.display="none"},4200)}function enablebtn(){try{document.querySelector(".right_2 #editbtn").removeAttribute("disabled"),document.querySelector(".right_2 #editbtn").style.cursor="pointer"}catch(e){console.error(e)}}function open_nav_dropdown(e){var t="";if("freq"==e){var o=document.querySelector("#ico1"),r=document.querySelector("#ico1 i"),n=document.querySelector("#ico1 .hghlgtr"),a=document.querySelector(".freq_dropdown");document.querySelector("#ico2").setAttribute("cdata","1"),document.querySelector("#ico3").setAttribute("cdata","1"),document.querySelector("#ico2").setAttribute("onmouseout","remove_hover_ico('ico2')"),document.querySelector("#ico3").setAttribute("onmouseout","remove_hover_ico('ico3')"),t="ico1",document.querySelector("#ico1 i").classList.remove("active"),a.style.width="350px",a.style.height="445px"}else if("noti"==e){o=document.querySelector("#ico2"),r=document.querySelector("#ico2 i"),n=document.querySelector("#ico2 .hghlgtr"),a=document.querySelector(".noti_dropdown");document.querySelector("#ico1").setAttribute("cdata","1"),document.querySelector("#ico3").setAttribute("cdata","1"),document.querySelector("#ico1").setAttribute("onmouseout","remove_hover_ico('ico1')"),document.querySelector("#ico3").setAttribute("onmouseout","remove_hover_ico('ico3')"),t="ico2",document.querySelector("#ico2 i").classList.remove("active"),a.style.width="350px",a.style.height="395px"}else{o=document.querySelector("#ico3"),r=document.querySelector("#ico3 i"),n=document.querySelector("#ico3 .hghlgtr"),a=document.querySelector(".usrstngs_dropdown");document.querySelector("#ico2").setAttribute("cdata","1"),document.querySelector("#ico1").setAttribute("cdata","1"),document.querySelector("#ico2").setAttribute("onmouseout","remove_hover_ico('ico2')"),document.querySelector("#ico1").setAttribute("onmouseout","remove_hover_ico('ico1')"),t="ico3"}var i=o.getBoundingClientRect(),c=window.innerWidth-i.x-30.5;a.style.right=c.toString()+"px",document.querySelector("#ico1 i").style.color="rgba(0, 0, 0, 0.5)",document.querySelector("#ico1 .hghlgtr").style.background="gray",document.querySelector(".freq_dropdown").style.display="none",document.querySelector("#ico2 i").style.color="rgba(0, 0, 0, 0.5)",document.querySelector("#ico2 .hghlgtr").style.background="gray",document.querySelector(".noti_dropdown").style.display="none",document.querySelector("#ico3 i").style.color="rgba(0, 0, 0, 0.5)",document.querySelector("#ico3 .hghlgtr").style.background="gray",document.querySelector(".usrstngs_dropdown").style.display="none";var s=parseInt(o.getAttribute("cdata"));if(s%2==1){r.style.color="var(--hover-color)",n.style.background="var(--hover-color)",document.querySelector(".nav_main").style.borderBottom="2px solid var(--hover-color)";var l=s+1;o.setAttribute("cdata",l.toString()),a.style.display="block",o.removeAttribute("onmouseout"),"ico1"==t?load_freq():"ico2"==t&&(load_noti(),document.querySelector(".noti_dropdown .mcont .bottom .noti_main").innerHTML="")}else{r.style.color="rgba(0, 0, 0, 0.5)",n.style.background="gray",document.querySelector(".nav_main").style.borderBottom="1px solid rgba(0, 0, 0, 0.20)";l=s+1;o.setAttribute("cdata",l.toString()),a.style.display="none";var u="remove_hover_ico('"+t+"');";o.setAttribute("onmouseout",u)}}function signup_ifocus(e){document.querySelector("."+e);document.querySelector("."+e+" .highlighter").style.background="var(--hover-color)"}function remove_signup_ifocus(e){document.querySelector("."+e);document.querySelector("."+e+" .highlighter").style.background="rgba(0, 0, 0, 0.60)"}function dp_change(){var e=document.querySelector("#dpchange").files[0];if(e.size<=6291456){document.querySelector(".main_spinner").style.display="flex";var t=new XMLHttpRequest;t.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;setTimeout(function(){document.querySelector(".main_spinner").style.display="none","nai_er"==e?alertmain("The File is not an Image."):"isset_er"==e?alertmain("Server Error! Please Try again later."):document.querySelector(".main_settings .left .dp .img img").setAttribute("src","http://<?php echo $server; ?>/img_users/"+e)},800)}};var o=new FormData;o.append("file",e),t.open("POST","http://<?php echo $server; ?>/bscripts/temp/dpchange.temp.php"),t.withCredentials=!0,t.send(o)}else alertmain("The File is too Big. (Max-6mB)")}function animate_settings_toggle(e){var t,o=$(".toggle_settings ul .angle");4==(e=parseInt(e))&&loadfriends(),t=1==e?15:2==t?55:40*(e-1)+15,o.animate({top:t},180,"swing"),document.querySelector('.toggle_settings ul li[id="selected"]').setAttribute("id",""),document.querySelector('.toggle_settings ul li[name="'+e+'"]').setAttribute("id","selected"),document.querySelector(".main_settings .right #selected").setAttribute("id",""),document.querySelector(".main_settings .right .right_"+e).setAttribute("id","selected")}function togglepass(e,t){"show"==e?"current"==t?(document.querySelector(".current .fa-eye").style.display="none",document.querySelector(".current .fa-eye-slash").style.display="block",document.querySelector(".current input").setAttribute("type","text")):(document.querySelector(".new .fa-eye").style.display="none",document.querySelector(".new .fa-eye-slash").style.display="block",document.querySelector(".new input").setAttribute("type","text")):"current"==t?(document.querySelector(".current .fa-eye").style.display="block",document.querySelector(".current .fa-eye-slash").style.display="none",document.querySelector(".current input").setAttribute("type","password")):(document.querySelector(".new .fa-eye").style.display="block",document.querySelector(".new .fa-eye-slash").style.display="none",document.querySelector(".new input").setAttribute("type","password"))}function agechk(e,t,o){var r=new Date,n=r.getDate(),a=r.getMonth()+1,i=r.getFullYear();return i-o>10?1:i-o==10&&n-e>=0&&a-t>=0?1:0}function updategeneral(){document.querySelector(".main_spinner").style.display="flex";var e=document.querySelector(".right_1 .username input").value,t=document.querySelector(".right_1 .bio textarea").value,o=document.querySelector(".right_1 .birthday select[name=day]").value.toString(),r=document.querySelector(".right_1 .birthday select[name=month]").value.toString(),n=document.querySelector(".right_1 .birthday select[name=year]").value.toString(),a=o+"/"+r+"/"+n;if(agechk(o,r,n)){var i=document.querySelector(".right_1 .username input").getAttribute("toupdate"),c=new XMLHttpRequest;c.onreadystatechange=function(){if(4==this.readyState&&200==this.status){this.responseText;setTimeout(function(){document.querySelector(".main_spinner").style.display="none",alertmain("Account Updated!")},300)}};var s=new FormData;s.append("username",e),s.append("bio",t),s.append("birthday",a),s.append("toupdateusername",i),s.append("which","general"),c.open("POST","http://<?php echo $server; ?>/bscripts/actions/update_user.php"),c.withCredentials=!0,c.send(s)}else document.querySelector(".main_spinner").style.display="none",alertmain("Your age should be atleast 10 years.")}function updatesocial(){var e=document.querySelector(".right_2 .facebook input").value,t=document.querySelector(".right_2 .instagram input").value,o=document.querySelector(".right_2 .twitter input").value;document.querySelector(".main_spinner").style.display="flex";var r=new XMLHttpRequest;r.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;"1"==e?setTimeout(function(){document.querySelector(".main_spinner").style.display="none",alertmain("Your social media accounts are Updated!")},500):console.log(e)}};var n=new FormData;n.append("facebook",e),n.append("instagram",t),n.append("twitter",o),n.append("which","social"),r.open("POST","http://<?php echo $server; ?>/bscripts/actions/update_user.php"),r.withCredentials=!0,r.send(n)}function password_btn_toggle(){document.querySelector(".right_3 .new input").value.length>=8?(document.querySelector(".right_3 .change_pass_btn").removeAttribute("disabled"),document.querySelector(".right_3 .change_pass_btn").style.cursor="pointer"):(document.querySelector(".right_3 .change_pass_btn").setAttribute("disabled","true"),document.querySelector(".right_3 .change_pass_btn").style.cursor="auto")}function updatepassword(){var e=document.querySelector(".right_3 .current input").value,t=document.querySelector(".right_3 .new input").value;document.querySelector(".main_spinner").style.display="flex";var o=new XMLHttpRequest;o.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;setTimeout(function(){document.querySelector(".main_spinner").style.display="none",alertmain("1"==e?"Password Changed!":"no"==e?"Current Password is wrong!":"Server Error! Please try again later.")},650)}};var r=new FormData;r.append("current",e),r.append("new",t),r.append("which","security"),o.open("POST","http://<?php echo $server; ?>/bscripts/actions/update_user.php"),o.withCredentials=!0,o.send(r)}function loadfriends(e,t){var o=new XMLHttpRequest;o.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var e=this.responseText;try{var o=JSON.parse(e);document.querySelector(".right_4 .top h1 span").innerHTML="("+o.count+")",setTimeout(function(){null==t?document.querySelector(".right_4 .bottom .main").innerHTML=o.data:document.querySelector(".right_4 .bottom .main").innerHTML+=o.data,document.querySelector(".right_4 .spinner_main").style.display="none"},250)}catch(t){document.querySelector(".right_4 .top h1 span").innerHTML="(0)",document.querySelector(".right_4 .bottom .main").innerHTML=e}}};var r=new FormData;null==e?r.append("offset",0):r.append("offset",e),o.open("POST","http://<?php echo $server; ?>/bscripts/load/getfriendfromstorage.php"),o.withCredentials=!0,o.send(r)}function unfriend(e,t){var o=document.querySelector("#id"+e+" .spinner"),r=document.querySelector("#id"+e+" i");o.style.display="block",r.style.display="none";var n=new XMLHttpRequest;n.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var z=this.responseText;1==z?setTimeout(function(){document.querySelector("#id"+e+" .unfriend_confirm").style.display="block",o.style.display="none"},500):(o.style.display="none",alertmain("An error Occured!"),console.log(z))}};var a=new FormData;a.append("key",e),n.open("POST","http://<?php echo $server; ?>/bscripts/actions/unfriend.php"),n.withCredentials=!0,n.send(a)}function decline_request(e,t){document.querySelector("#overlay_"+t).style.display="flex";var o=new XMLHttpRequest;o.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;1==e?setTimeout(function(){document.querySelector("#freq-items_"+t+" #decline_request").innerHTML="Declined &#10004;",document.querySelector("#freq-items_"+t+" #decline_request").style.width="70px",document.querySelector("#freq-items_"+t+" #decline_request").setAttribute("disabled","true"),document.querySelector("#freq-items_"+t+" #decline_request").style.cursor="auto",document.querySelector("#freq-items_"+t+" #accept_request").setAttribute("disabled","true"),document.querySelector("#freq-items_"+t+" #accept_request").style.cursor="auto",document.querySelector("#freq-items_"+t+" #accept_request").removeAttribute("onclick"),document.querySelector("#freq-items_"+t+" #decline_request").removeAttribute("onclick"),document.querySelector("#overlay_"+t).style.display="none"},650):(alertmain("An Error Occured!"),console.log(e))}},o.open("POST","http://<?php echo $server; ?>/bscripts/load/freq.php"),o.withCredentials=!0;var r=new FormData;r.append("which","decline"),r.append("key",e),r.append("id",t),o.send(r)}function upload_temp_page_dp(){var e=document.querySelector(".bottom_maincreatepage form .dps input").files[0];if(e.size<=6291456){document.querySelector(".bottom_maincreatepage .dps .spinner").style.display="block";var t=new XMLHttpRequest;t.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;setTimeout(function(){document.querySelector(".bottom_maincreatepage .dps .spinner").style.display="none","nai_er"==e?alertmain("The File is not an Image."):"isset_er"==e?alertmain("Server Error! Please Try again later."):(document.querySelector(".bottom_maincreatepage form .dps input").setAttribute("src",e),document.querySelector(".bottom_maincreatepage form .dps .upload img").setAttribute("src","http://<?php echo $server; ?>/temp_uploads/"+e),document.querySelector(".bottom_maincreatepage form .dps .upload img").style.display="block",document.querySelector(".bottom_maincreatepage form .dps .upload").setAttribute("class","upload upload-after"),document.querySelector(".bottom_maincreatepage form .dps .upload").setAttribute("upload-after-text","Click to Change"))},800)}};var o=new FormData;o.append("file",e),t.open("POST","http://<?php echo $server; ?>/bscripts/temp/imageupload.temp.php"),t.withCredentials=!0,t.send(o)}else alertmain("The File is too Big. (Max-6mB)")}function createpage(){var e=document.querySelector(".bottom_maincreatepage form .page_name input").value,t=document.querySelector(".bottom_maincreatepage form .page_email input").value,o=document.querySelector(".bottom_maincreatepage form .facebook input").value,r=document.querySelector(".bottom_maincreatepage form .instagram input").value,n=document.querySelector(".bottom_maincreatepage form .twitter input").value,a=document.querySelector(".bottom_maincreatepage form .dps input").getAttribute("src"),i=document.querySelector(".bottom_maincreatepage form .page_about textarea").value;if(document.querySelector(".main_spinner").style.display="flex",""==i&&(i="-"),""==a&&(a="-"),""==o&&(o="-"),""==r&&(r="-"),""==n&&(n="-"),""==e||""==t)alertmain("Please fill the name and email entries.");else{var c=new XMLHttpRequest;c.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;setTimeout(function(){document.querySelector(".main_spinner").style.display="none","email_err"==e?alertmain("Please enter a real email."):"err"==e?alertmain("Please try again later."):"nemail_err"==e?alertmain("Page with same email already exists."):"char_err"==e?alertmain("Page Name should not contain spaces or special letters."):"len_err"==e?alertmain("Pagename length must atleast be 5 and atmost be 30."):"about_len_err"==e?alertmain("About content should be atmost 300."):"1"==e?alertmain("Your Page has been created."):(console.log(e),alertmain("Server Error! Please Try again later."))},700)}};var s=new FormData;s.append("name",e),s.append("email",t),s.append("facebook",o),s.append("instagram",r),s.append("twitter",n),s.append("pic",a),s.append("about",i),c.open("POST","http://<?php echo $server; ?>/bscripts/actions/createpage.php"),c.withCredentials=!0,c.send(s)}return!1}function open_mypageedit(e,t,o,r,n,a,i,c){document.querySelector(".settings_mypages_overlay").style.display="block",document.querySelector(".settings_mypages_overlay").setAttribute("which",e),document.querySelector(".settings_mypages_overlay .main .top span h2 span").innerHTML="("+decodeURI(o)+")",document.querySelector(".settings_mypages_overlay .main .bottom .name input").setAttribute("value",decodeURI(o)),document.querySelector(".settings_mypages_overlay .main .bottom .about textarea").innerHTML=decodeURIComponent(a),document.querySelector(".settings_mypages_overlay .main .bottom .email input").setAttribute("value",decodeURIComponent(c));var s=(i=JSON.parse(decodeURIComponent(i))).facebook,l=i.instagram,u=i.twitter;document.querySelector(".settings_mypages_overlay .main .bottom .social .facebook input").setAttribute("value",s),document.querySelector(".settings_mypages_overlay .main .bottom .social .instagram input").setAttribute("value",l),document.querySelector(".settings_mypages_overlay .main .bottom .social .twitter input").setAttribute("value",u),"-"==t?document.querySelector(".settings_mypages_overlay .main .bottom .dp .img img").setAttribute("src","http://<?php echo $server; ?>/img_pages/yellow.jpg"):document.querySelector(".settings_mypages_overlay .main .bottom .dp .img img").setAttribute("src","http://<?php echo $server; ?>/img_pages/"+t)}function updatepageinfo(e){document.querySelector(".main_spinner").style.display="flex";var t=document.querySelector(".settings_mypages_overlay .main .bottom .name input").value,o=document.querySelector(".settings_mypages_overlay .main .bottom .about textarea").value,r=document.querySelector(".settings_mypages_overlay .main .bottom .dp .img img").getAttribute("src"),n=document.querySelector(".settings_mypages_overlay .main .bottom .email input").value,a=document.querySelector(".settings_mypages_overlay .main .bottom .social .facebook input").value,i=document.querySelector(".settings_mypages_overlay .main .bottom .social .twitter input").value,c=document.querySelector(".settings_mypages_overlay .main .bottom .social .instagram input").value;""==a&&(a="-"),""==c&&(c="-"),r.includes("yellow.jpg")&&(r="-");var s={facebook:a,twitter:i,instagram:c};s=JSON.stringify(s);var l=new XMLHttpRequest;l.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var e=this.responseText;document.querySelector(".main_spinner").style.display="none","1"==e?(alertmain("Done!"),setTimeout(function(){document.querySelector(".settings_mypages_overlay").style.display="none"},1e3)):alertmain(e)}};var u=new FormData;u.append("name",t),u.append("about",o),u.append("photo",r),u.append("email",n),u.append("social",s),u.append("pid",e),u.append('dp_change', dp_change),l.open("POST","http://<?php echo $server; ?>/bscripts/actions/updatemypageinfo.php"),l.withCredentials=!0,l.send(u)}function dp_change_page(){var e=document.querySelector("#dpchangepage").files[0];if(e.size<=6291456){document.querySelector(".main_spinner").style.display="flex";var t=new XMLHttpRequest;t.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;setTimeout(function(){document.querySelector(".main_spinner").style.display="none","nai_er"==e?alertmain("The File is not an Image."):"isset_er"==e?alertmain("Server Error! Please Try again later."):document.querySelector(".settings_mypages_overlay .main .bottom .dp .img img").setAttribute("src","http://<?php echo $server; ?>/temp_uploads/"+e)},800);dp_change=1;}};var o=new FormData;o.append("file",e),t.open("POST","http://<?php echo $server; ?>/bscripts/temp/dpchangepage.temp.php"),t.withCredentials=!0,t.send(o)}else alertmain("The File is too Big. (Max-6mB)")}function load_mypages(){var e=new XMLHttpRequest;e.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;"0"==e?setTimeout(function(){document.querySelector(".main_mypages .bottom .spinner_").style.display="none",document.querySelector(".main_mypages .bottom .items").innerHTML="<span style='position: absolute;left: 50%;color: gray;text-align: center;top: 10px;transform: translate(-50%, 0%)'>You do not have any page.</span>"},300):setTimeout(function(){document.querySelector(".main_mypages .bottom .spinner_").style.display="none",document.querySelector(".main_mypages .bottom .items").innerHTML=e},300)}},e.open("POST","http://<?php echo $server; ?>/bscripts/load/mypages_load.php"),e.withCredentials=!0,e.send()}function open_uploadpost_overlay(e,t,o,r){document.querySelector(".upload_post_overlay").style.display="block",document.querySelector(".upload_post_overlay").setAttribute("which",e),document.querySelector(".upload_post_overlay").setAttribute("name",t),document.querySelector(".upload_post_overlay").setAttribute("pc",o),document.querySelector(".upload_post_overlay").setAttribute("pagedp",r)}function uploadmemeimage(){var e=document.querySelector("#memeuploadinput").files[0];if(e.size<=6291456){document.querySelector(".uploadimage .iconcontainer .spinner").style.display="block";var t=new XMLHttpRequest;t.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;setTimeout(function(){document.querySelector(".uploadimage .iconcontainer .spinner").style.display="none","nai_er"==e?(alertmain("The File is not an Image."),document.querySelector(".upload_post_overlay .main .top button").setAttribute("disabled","true"),document.querySelector(".upload_post_overlay .main .top button").style.cursor="auto"):"isset_er"==e?(alertmain("Server Error! Please Try again later."),document.querySelector(".upload_post_overlay .main .top button").setAttribute("disabled","true"),document.querySelector(".upload_post_overlay .main .top button").style.cursor="auto"):($(".uploadimage").animate({top:"10px"},"fast","linear"),document.querySelector(".uploadimage .iconcontainer i").setAttribute("class","far fa-exchange"),document.querySelector(".uploadimage #infoupload").innerHTML="Click to Change",document.querySelector(".imagecontainer").style.display="block",document.querySelector(".imagecontainer img").setAttribute("src","http://<?php echo $server; ?>/temp_uploads/"+e),document.querySelector(".imagecontainer img").setAttribute("data-src","temp_uploads/"+e),document.querySelector(".upload_post_overlay .main .top button").removeAttribute("disabled"),document.querySelector(".upload_post_overlay .main .top button").style.cursor="pointer")},800)}};var o=new FormData;o.append("file",e),t.open("POST","http://<?php echo $server; ?>/bscripts/temp/memeimageupload.temp.php"),t.withCredentials=!0,t.send(o)}else alertmain("The File is too Big. (Max-6mB)")}function addtagstoggle(){document.querySelector(".upload_post_overlay .bottom .right .addtagsinfo").style.display="none",document.querySelector(".upload_post_overlay .bottom .right .addtags_container").style.display="block",document.querySelector(".upload_post_overlay .bottom .right .addtags").style.display="block"}function uploadmeme(){var e,t=[],o=$(".addtags input[type=checkbox]:checked").length;if(o>0){var r,n=$(".addtags input[type=checkbox]:checked");for(e=0;e<=o-1;e++)r=n[e].value,t.push(r)}else t=[];var a=document.querySelector(".imagecontainer img").getAttribute("data-src"),i=document.querySelector(".upload_post_overlay").getAttribute("which"),c=document.querySelector(".upload_post_overlay .right .caption textarea").value,s=document.querySelector(".upload_post_overlay").getAttribute("name"),l=document.querySelector(".upload_post_overlay").getAttribute("pc"),u=document.querySelector(".upload_post_overlay").getAttribute("pagedp");document.querySelector(".upload_post_overlay .main .top .spinner").style.display="block";var d=new XMLHttpRequest;d.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var e=this.responseText;setTimeout(function(){document.querySelector(".upload_post_overlay .main .top .spinner").style.display="none",1==e?alertmain("Upload Complete!"):(alertmain("Server Error! Please Try again Later."),console.log(e)),document.querySelector(".overlay").innerHTML="",document.querySelector(".overlay").style.display="none",document.querySelector(".uploadimage .iconcontainer i").setAttribute("class","far fa-arrow-alt-up"),document.querySelector(".uploadimage #infoupload").innerHTML="(Only JPEG, PNG or JPG)",document.querySelector(".imagecontainer").style.display="none",document.querySelector(".upload_post_overlay .main .top button").setAttribute("disabled","true"),document.querySelector(".upload_post_overlay .main .top button").style.cursor="auto",document.querySelector(".imagecontainer img").setAttribute("src",""),document.querySelector(".upload_post_overlay").style.display="none",document.querySelector(".upload_post_overlay").removeAttribute("which"),document.querySelector(".upload_post_overlay").removeAttribute("name"),document.querySelector(".upload_post_overlay").removeAttribute("pc"),document.querySelector(".upload_post_overlay").removeAttribute("pagedp")},500)}};var p=new FormData;p.append("which",i),p.append("img",a),p.append("tags",JSON.stringify(t)),p.append("pagename",s),p.append("pc",l),p.append("pagedp",u),c&&p.append("caption",c),d.open("POST","http://<?php echo $server; ?>/bscripts/actions/uploadmeme.php"),d.withCredentials=!0,d.send(p)}function slidedrop_post(e,t){parseInt(e.getAttribute("dataclick"))%2==0?(document.querySelector("#f"+t+" .top .extraicon i").style.color="var(--hover-color)",document.querySelector("#f"+t+" .top .extraicon i").style.fontWeight="bolder",document.querySelector("#f"+t+" .top .extraicon i").style.fontSize="18px",document.querySelector("#f"+t+" .top").style.borderBottom="2px solid var(--hover-color)",document.querySelector("#f"+t+" .top .pdp").style.border="2px solid var(--hover-color)",$("#drop_"+t).slideDown(200,"swing"),e.setAttribute("dataclick","1")):(document.querySelector("#f"+t+" .top .extraicon i").style.color="#222",document.querySelector("#f"+t+" .top .extraicon i").style.fontWeight="bold",document.querySelector("#f"+t+" .top .extraicon i").style.fontSize="16px",document.querySelector("#f"+t+" .top").style.borderBottom="1px solid var(--main-border)",document.querySelector("#f"+t+" .top .pdp").style.border="1px solid var(--main-border)",$("#drop_"+t).slideUp("fast"),e.setAttribute("dataclick","0"))}function unfollowpage_thrposts(e,t){document.querySelector("#f"+t+" .top .extraicon i").style.color="#222",document.querySelector("#f"+t+" .top .extraicon i").style.fontWeight="bold",document.querySelector("#f"+t+" .top .extraicon i").style.fontSize="16px",document.querySelector("#f"+t+" .top").style.borderBottom="1px solid var(--main-border)",document.querySelector("#f"+t+" .top .pdp").style.border="1px solid var(--main-border)",$("#drop_"+t).slideUp("fast"),document.querySelector("#f"+t+" .top .extraicon i").setAttribute("dataclick","0");var o=new XMLHttpRequest;o.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;setTimeout(function(){alertmain(1==e?"Unfollowed!":0==e?"An error occured.":e)},40)}};var r=new FormData;r.append("pid",e),r.append("action","unfollow"),o.open("POST","http://<?php echo $server; ?>/bscripts/actions/followpage.php"),o.withCredentials=!0,o.send(r)}function followpage_thrposts(e,t){document.querySelector("#f"+t+" .top .extraicon i").style.color="#222",document.querySelector("#f"+t+" .top .extraicon i").style.fontWeight="bold",document.querySelector("#f"+t+" .top .extraicon i").style.fontSize="16px",document.querySelector("#f"+t+" .top").style.borderBottom="1px solid var(--main-border)",document.querySelector("#f"+t+" .top .pdp").style.border="1px solid var(--main-border)",$("#drop_"+t).slideUp("fast"),document.querySelector("#f"+t+" .top .extraicon i").setAttribute("dataclick","0");var o=new XMLHttpRequest;o.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;setTimeout(function(){alertmain(1==e?"Followed!":0==e?"An error occured.":e)},40)}};var r=new FormData;r.append("pid",e),r.append("action","follow"),o.open("POST","http://<?php echo $server; ?>/bscripts/actions/followpage.php"),o.withCredentials=!0,o.send(r)}function reacttopost(e,t,o){if("positive"==e&&(document.querySelector("#f"+o+" .post_actions .left i").setAttribute("id","animatepositive"),document.querySelector("#f"+o+" .post_actions .left span").style.fontWeight="bold",document.querySelector("#f"+o+" .post_actions .left span").style.color="var(--hover-color)",document.querySelector("#f"+o+" .post_actions .left span").style.fontSize="13px"),"positive"==e){var r=parseInt(document.querySelector("#f"+o+" .post_actions #like_count").getAttribute("data-react"));r+=1,document.querySelector("#f"+o+" .post_actions #like_count").setAttribute("data-react",r.toString()),document.querySelector("#f"+o+" .post_actions #like_count").innerHTML="("+r.toString()+")",document.querySelector("#f"+o+" .post_actions .left").removeAttribute("onclick"),document.querySelector("#f"+o+" .post_actions .left").style.cursor="auto",document.querySelector("#f"+o+" .post_actions .right").removeAttribute("onclick"),document.querySelector("#f"+o+" .post_actions .right").style.cursor="auto"}else{r=parseInt(document.querySelector("#f"+o+" .post_actions #dislike_count").getAttribute("data-react"));r+=1,document.querySelector("#f"+o+" .post_actions #dislike_count").setAttribute("data-react",r.toString()),document.querySelector("#f"+o+" .post_actions #dislike_count").innerHTML="("+r.toString()+")",document.querySelector("#f"+o+" .post_actions .left").removeAttribute("onclick"),document.querySelector("#f"+o+" .post_actions .left").style.cursor="auto",document.querySelector("#f"+o+" .post_actions .right").removeAttribute("onclick"),document.querySelector("#f"+o+" .post_actions .right").style.cursor="auto"}var n=new XMLHttpRequest;n.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var e=this.responseText;"1"==e||(console.log(e),alertmain("Couldn't react to the post"))}};var a=new FormData;a.append("mid",t),a.append("which",e),n.open("POST","http://<?php echo $server; ?>/bscripts/actions/reacttopost.php"),n.withCredentials=!0,n.send(a)}function loadlazychat(){var e=new XMLHttpRequest;e.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;try{var t=(e=JSON.parse(e)).count,o=e.data;try{document.querySelector(".onnfrnds").innerHTML=o,document.querySelector(".onlinefrnds #line").getAttribute("data-value").includes("On")&&(document.querySelector(".onlinefrnds #line").setAttribute("data-value","Online Friends ("+t+")"),document.querySelector(".onlinefrnds #line").setAttribute("f_count",t))}catch(e){}}catch(t){document.querySelector(".onlinefrnds #line").setAttribute("data-value","Online Friends (0)"),document.querySelector(".onnfrnds").innerHTML=e}document.querySelector("#offonchatspin").style.display="none"}},e.open("POST","http://<?php echo $server; ?>/bscripts/load/onlinefrnds.php"),e.withCredentials=!0,e.send()}function chatanimation(){document.querySelector(".onlinefrnds #line").setAttribute("class","anim"),setTimeout(function(){document.querySelector(".onlinefrnds #line").setAttribute("class","")},900);var e=parseInt(document.querySelector(".onlinefrnds #line").getAttribute("data-change"));if(e%2==1){document.querySelector(".onnfrnds").style.display="none",document.querySelector("#offonchatspin").style.display="block",setTimeout(function(){document.querySelector("#offonchatspin").style.display="none",document.querySelector(".chathistory").style.display="block",document.querySelector(".onlinefrnds #line").setAttribute("data-value","Chat History")},1250),clearInterval(loadchatinterval),loadchathistory(0,12,null),document.querySelector(".chatwindow").setAttribute("data-which","history");try{document.querySelector(".right_more_ i").removeAttribute("id")}catch(e){}}else{document.querySelector(".onnfrnds").style.display="block",document.querySelector(".chathistory").style.display="none",document.querySelector(".onlinefrnds #line").setAttribute("data-value","Online Friends (0)");var t=document.querySelector(".left_divider .top_heading").getAttribute("state");clearInterval(loadchathistoryinterval),"enabled"==t&&(loadchatinterval=setInterval(function(){loadlazychat()},2500),document.querySelector(".chatwindow").setAttribute("data-which","chat"))}e+=1,document.querySelector(".onlinefrnds #line").setAttribute("data-change",e.toString())}function disablechat(){var e=document.querySelector(".left_more_").getAttribute("cdata");parseInt(e)%2==1?(clearInterval(loadchatinterval),document.querySelector(".onnfrnds").innerHTML="",document.querySelector("#offonchatspin").style.display="block",document.querySelector(".left_divider .top_heading").setAttribute("state","disabled"),setTimeout(function(){document.querySelector(".center_more_").style.color="#cc0000",document.querySelector("#offonchatspin").style.display="none",document.querySelector(".onnfrnds").innerHTML="",document.querySelector(".onnfrnds").innerHTML="<span class='chat_off_warning'><br><h1>You are Offline!</h1><br><font style='color: #262626'>Click the power button</font> <br> <i class='fas fa-power-off fa-4x' style='position: relative;top:2px;color: #262626'></i> <br> <font style='position: relative;top: 4px;'>to enable Chat.</font></span>",document.querySelector(".onnfrnds").innerHTML="<img src='http://<?php echo $server; ?>/img/panda_offline3.jpg' width='260' height='260'>",document.querySelector(".onlinefrnds #line").setAttribute("data-value","Online Friends (0)")},2001)):(document.querySelector("#offonchatspin").style.display="block",document.querySelector(".onnfrnds").innerHTML="",document.querySelector(".left_divider .top_heading").setAttribute("state","enabled"),setTimeout(function(){document.querySelector(".center_more_").style.color="#00b300",loadchatinterval=setInterval(function(){loadlazychat()},2500)},1500));var t=parseInt(e)+1;document.querySelector(".left_more_").setAttribute("cdata",t.toString())}function loadchathistory(e,t,o){e=parseInt(e),t=parseInt(t),null==o||(o=parseInt(o));var r=new XMLHttpRequest;r.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var e=this.responseText;0==e?document.querySelector(".chathistory").innerHTML="<center><span style='font-size:12px;color: gray;'>You haven't started a conversation with anyone yet.</span></center>":(document.querySelector(".chathistory").innerHTML=e,loadchathistoryinterval=setInterval(function(){loadchathistorytchk(0,12,null)},2500))}},r.open("GET","http://<?php echo $server; ?>/bscripts/chat/loadchathistory.php?offset="+e+"&limit="+t+"&total="+o),r.withCredentials=!0,r.send()}function loadchathistorytchk(e,t,o){var r=new XMLHttpRequest,n=encodeURIComponent(document.querySelector(".item_chat .details ul .last_message").innerHTML);r.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var e=this.responseText;if(0==e);else{var t=(e=JSON.parse(e)).uid;document.querySelector(".item_chat[uid="+t+"]").remove();var o=document.querySelector(".chathistory").innerHTML;document.querySelector(".chathistory").innerHTML=e.html+o}}},r.open("GET","http://<?php echo $server; ?>/bscripts/chat/loadchathistory.php?offset="+e+"&\tlimit="+t+"&total="+o+"&lmess="+n),r.withCredentials=!0,r.send()}function removechatwindow(e){document.querySelector(".chatwindow").style.display="none",document.querySelector(".chatwindow").setAttribute("data-username",""),document.querySelector(".chatwindow").setAttribute("data-fullname",""),document.querySelector(".chatwindow").setAttribute("data-cid",""),document.querySelector(".chatwindow").setAttribute("data-uid",""),document.querySelector(".chatwindow").setAttribute("data-pic",""),clearInterval(getcidinterval),clearInterval(updatelmesinterval),"history"==e?(loadchathistory(0,12,null),document.querySelector(".onlinefrnds #line").setAttribute("data-value","Chat History")):document.querySelector(".onlinefrnds #line").setAttribute("data-value","Online Friends ("+document.querySelector(".onlinefrnds #line").getAttribute("f_count")+")")}function loadchat(e,t,o,r,n,a,i){document.querySelector(".mainchat .spinner").style.display="block";var c=new XMLHttpRequest;c.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var e=this.responseText;document.querySelector(".mainchat .spinner").style.display="none";var t=document.querySelector(".mainchat .maindata ul").innerHTML;document.querySelector(".mainchat .maindata ul").innerHTML=t+e;try{document.querySelector("#"+i).style.display="none"}catch(e){}document.querySelector("#chat_mess_input").focus(),document.querySelector("#chat_mess_input").setAttribute("value","")}};var s=new FormData;null==r&&(r=0),null==n&&(n=15),null==a&&(a=0),s.append("offset",r),s.append("limit",n),s.append("username",o),s.append("allmesscount",a),s.append("uid_f",e),s.append("uid_m",t),c.open("POST","http://<?php echo $server; ?>/bscripts/chat/loadchats.php"),c.withCredentials=!0,c.send(s)}function searchbar_toggle(e){if(window.innerWidth>924)document.querySelector(".ico_search").style.display="none",document.querySelector(".search_bar").style.display="flex";else if("open"==e){var t=document.querySelector(".ico_search"),o=document.querySelector(".search_resp_dropdown");document.querySelector(".nav_main").style.borderBottom="2px solid var(--hover-color)",o.style.display="flex";var r=t.getBoundingClientRect(),n=window.innerWidth-r.x-30.5;o.style.right=n.toString()+"px",t.setAttribute("onclick",'searchbar_toggle("close")'),o.style.width="285px",o.style.height="60px"}else{t=document.querySelector(".ico_search"),o=document.querySelector(".search_resp_dropdown");document.querySelector(".nav_main").style.borderBottom="1px solid var(--main-border)",o.style.display="none",t.setAttribute("onclick",'searchbar_toggle("open")')}}function focussearchbar(){document.querySelector(".search_bar .highlgtr").style.background="var(--hover-color)",document.querySelector(".search_resp_dropdown .highlgtr").style.background="var(--hover-color)"}function focussoutsearchbar(){document.querySelector(".search_bar .highlgtr").style.background="gray",document.querySelector(".search_resp_dropdown .highlgtr").style.background="gray"}function search(e,t,o,r){try{document.querySelector(".overlay").style.display="none",document.querySelector(".search_resp_dropdown").style.display="none"}catch(e){}var n=new XMLHttpRequest;document.querySelector(".main_search .bottom .spinner").style.display="block",document.querySelector(".main_search .bottom .content").innerHTML="",n.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var e=this.responseText;document.querySelector(".search_overlay").style.display="block",setTimeout(function(){document.querySelector(".main_search .bottom .spinner").style.display="none",null==r?document.querySelector(".main_search .bottom .content").innerHTML=e:document.querySelector(".main_search .bottom .content").innerHTML+=e},450)}};var a=new FormData;a.append("query",e),a.append("which",t),null==o?a.append("offset",0):a.append("offset",o),n.open("POST","http://<?php echo $server; ?>/bscripts/load/search.php"),n.withCredentials=!0,n.send(a)}function entercapture(e,t,o){document.querySelector(".resp_search_input").value=o,o.length>0&&"Enter"==e.key&&(search(o,"people"),document.querySelector(".typetoggle option[value=people]").removeAttribute("selected"),document.querySelector(".typetoggle #toggle option[value=people]").setAttribute("selected","1"))}function send_freq(e,t){var o=document.querySelector("#spb_"+e+" .send_req .spinner"),r=document.querySelector("#spb_"+e+" .send_req i");o.style.display="block",r.style.display="none";var n=new XMLHttpRequest;n.onreadystatechange=function(){if(200==this.status&&4==this.readyState){var t=this.responseText;setTimeout(function(){o.style.display="none",3==t?(alertmain("You cannot send friend request to yourself."),r.style.display="block"):2==t?(alertmain("You have already sent a friend request to this user."),r.style.display="block"):4==t?(alertmain("This user has already sent you a friend request."),r.style.display="block"):1==t?document.querySelector("#spb_"+e+" .send_req #friend_req_sent").style.display="block":console.log(t)},50)}};var a=new FormData;a.append("uid",t),a.append("which","sendreq"),n.open("POST","http://<?php echo $server; ?>/bscripts/load/freq.php"),n.withCredentials=!0,n.send(a)}function followpage(e,t){document.querySelector("#spageb_"+t+" .followicon .main").style.display="none",document.querySelector("#spageb_"+t+" .followicon .spinner").style.display="block";var o=new XMLHttpRequest;o.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var o=this.responseText;setTimeout(function(){if(1==o){document.querySelector("#spageb_"+t+" .followicon .spinner").style.display="none",document.querySelector("#spageb_"+t+" .followicon .main").style.display="flex",document.querySelector("#spageb_"+t+" .followicon .main i").style.color="var(--hover-color)",document.querySelector("#spageb_"+t+" .followicon .main i").style.fontWeight="bold",document.querySelector("#spageb_"+t+" .followicon .main i").setAttribute("onclick",'unfollowpage("'+e+'", "'+t+'")');var r=parseInt(document.querySelector("#spageb_"+t+" .followicon .main .followcount").innerHTML)+1;document.querySelector("#spageb_"+t+" .followicon .main .followcount").innerHTML=r}else 0==o?(document.querySelector("#spageb_"+t+" .followicon .spinner").style.display="none",document.querySelector("#spageb_"+t+" .followicon .main").style.display="flex",alertmain("Server Error! Please try again later.")):alertmain(o)},40)}};var r=new FormData;r.append("pid",e),r.append("action","follow"),o.open("POST","http://<?php echo $server; ?>/bscripts/actions/followpage.php"),o.withCredentials=!0,o.send(r)}function unfollowpage(e,t){document.querySelector("#spageb_"+t+" .followicon .main").style.display="none",document.querySelector("#spageb_"+t+" .followicon .spinner").style.display="block";var o=new XMLHttpRequest;o.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var o=this.responseText;setTimeout(function(){if(1==o){document.querySelector("#spageb_"+t+" .followicon .spinner").style.display="none",document.querySelector("#spageb_"+t+" .followicon .main").style.display="flex",document.querySelector("#spageb_"+t+" .followicon .main i").style.color="#333";var r=parseInt(document.querySelector("#spageb_"+t+" .followicon .main .followcount").innerHTML)-1;document.querySelector("#spageb_"+t+" .followicon .main .followcount").innerHTML=r,document.querySelector("#spageb_"+t+" .followicon .main i").setAttribute("onclick",'followpage("'+e+'", "'+t+'")')}else 0==o?(document.querySelector("#spageb_"+t+" .followicon .spinner").style.display="none",document.querySelector("#spageb_"+t+" .followicon .main").style.display="flex",alertmain("Server Error! Please try again later.")):alertmain(o)},40)}};var r=new FormData;r.append("pid",e),r.append("action","unfollow"),o.open("POST","http://<?php echo $server; ?>/bscripts/actions/followpage.php"),o.withCredentials=!0,o.send(r)}setInterval(function(){update_freqs(1)},6500),updateconteinterval=setInterval(function(){update_content()},5e3),window.addEventListener("keydown",function(e){27==e.keyCode&&(document.querySelector(".overlay").style.display="none")});		
+	</script>
 
 	<script>
-
-		var getcidinterval;
-		var updatelmesinterval;
-		var loadchatinterval;
-		var loadchathistoryinterval;
-		var updateconteinterval;
-
-		function update_freqs(e) {
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.readyState==4 && this.status==200) {
-					var resp = this.responseText;
-					if(e!=undefined) {
-						if(resp!=localStorage.getItem('freqs_count')) {
-							document.querySelector('#ico1 i').classList.add('active');
-						}	
-					}
-
-					localStorage.setItem('freqs_count', resp);
-				}
-			}
-			xml.open('GET', 'http://content.<?php echo $server; ?>/bscripts/load/update_freqs.php');
-			xml.withCredentials = true;
-			xml.send();
-		}
-
-		setInterval(function(){update_freqs(1);}, 6500);
-
-		function update_content() {
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.status=200 && this.readyState==4) {
-					var resp = this.responseText;
-					var json = JSON.parse(resp);
-
-					if(json.noti_count>json.oldnoticount) {
-						document.querySelector('#ico2 i').classList.add('active');
-					}
-				}
-			}
-
-			var state = document.querySelector('.left_divider .top_heading').getAttribute('state');
-			var formdata = new FormData();
-			formdata.append('state', state);
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/update_content.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-		}
-		updateconteinterval = setInterval(function(){
-			update_content();
-		}, 5000);
-
-		function hover_ico(e) {
-			if(e=='ico1') {
-				var dom = document.querySelector('#ico1');
-				var dom_ico = document.querySelector('#ico1 i');
-				var dom_hg = document.querySelector('#ico1 .hghlgtr');
-			}
-			else if(e=='ico2') {
-				var dom = document.querySelector('#ico2');
-				var dom_ico = document.querySelector('#ico2 i');
-				var dom_hg = document.querySelector('#ico2 .hghlgtr');
-			}
-			else {
-				var dom = document.querySelector('#ico3');
-				var dom_ico = document.querySelector('#ico3 i');
-				var dom_hg = document.querySelector('#ico3 .hghlgtr');
-			}
-
-			dom_ico.style.color = "var(--hover-color)";
-			dom_hg.style.background = "var(--hover-color)";
-
-		}
-
-		function remove_hover_ico(e) {	
-			if(e=='ico1') {
-				var dom = document.querySelector('#ico1');
-				var dom_ico = document.querySelector('#ico1 i');
-				var dom_hg = document.querySelector('#ico1 .hghlgtr');
-			}
-			else if(e=='ico2') {
-				var dom = document.querySelector('#ico2');
-				var dom_ico = document.querySelector('#ico2 i');
-				var dom_hg = document.querySelector('#ico2 .hghlgtr');
-			}
-			else {
-				var dom = document.querySelector('#ico3');
-				var dom_ico = document.querySelector('#ico3 i');
-				var dom_hg = document.querySelector('#ico3 .hghlgtr');
-			}
-
-			dom_ico.style.color = "rgba(0, 0, 0, 0.5)";
-			dom_hg.style.background = "gray";
-		}	
-
-		function dropdownaction(e) {
-			var link = "";
-			var spinner =  document.querySelector('.main_spinner');
-
-			var f = e;
-
-			spinner.style.display = "flex";
-
-			try {
-				document.querySelector('.search_overlay').style.display = "none";
-			}
-			catch(err) {
-				
-			}
-
-			if(e=='logout') {
-				link = 'logout.php';
-
-				clearInterval(updateconteinterval);
-
-				localStorage.clear();
-
-				setTimeout(function(){
-					spinner.style.display = "none";
-					window.location = "http://<?php echo $server; ?>/logout.php";
-				}, 900);
-			}
-			else {
-				link = 'http://content.<?php echo $server; ?>/bscripts/'+e+'.php';
-				if(e=='profile') {
-					link = 'http://content.<?php echo $server; ?>/bscripts/'+e+'.php?id=<?php echo $_SESSION['UID']; ?>';
-				}
-				var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-						setTimeout(function() {
-							
-							if(e=='settings' && window.innerWidth<950 && window.innerWidth>650) {
-								document.querySelector('.overlay_responsive').innerHTML = "";	
-								document.querySelector('.overlay_responsive').style.display = "flex";
-								spinner.style.display = "none";
-								document.querySelector('.overlay_responsive').innerHTML = resp;
-							}	
-							else {
-								document.querySelector('.overlay').innerHTML = "";	
-								document.querySelector('.overlay').style.display = "block";
-								spinner.style.display = "none";
-								document.querySelector('.overlay').innerHTML = resp;
-				
-								if(f=='mypages') {
-									load_mypages();
-								}
-								setTimeout(function() {
-									document.querySelector('#ico3 i').style.color = "rgba(0, 0, 0, 0.5)";
-									document.querySelector('#ico3 .hghlgtr').style.background = "gray";
-									document.querySelector(".usrstngs_dropdown").style.display = "none";
-									document.querySelector('.nav_main').style.borderBottom = "1px solid rgba(0, 0, 0, 0.20)";
-									document.querySelector('#ico3').setAttribute('cdata', "1");
-									document.querySelector('#ico3').setAttribute('onmouseout', "remove_hover_ico('ico3')");
-								}, 4500);
-							}
-
-						}, 1225);
-					}
-				}
-				xml.open("POST", link);
-				xml.withCredentials = true;
-				xml.send();
-			}
-
-
-		}
-
-		window.addEventListener('keydown', function(e) {
-			if(e.keyCode==27) {
-				document.querySelector('.overlay').style.display = "none";
-			}
-		});
-
-		document.addEventListener('readystatechange', event => {
-
-			    if (event.target.readyState === "complete") {
-			    	document.querySelector('#offonchatspin').style.display = "block";
-			    	document.querySelector('.postloader').style.display = "block";
-					localStorage.setItem('uid', '<?php echo $_SESSION['UID']; ?>');			    	
-			    	setTimeout(function() {
-			    		loadlazyposts();
-			    	}, 800);
-
-			    	setTimeout(function() {
-			    		loadlazychat();
-			    	}, 900);
-
-			    	setTimeout(function(){
-			    		loadlazypgsugg();
-			    	}, 900);
-
-			    	setInterval(function(){
-			    		var xml = new XMLHttpRequest();
-			    		xml.onreadystatechange = function() {
-			    			if(this.readyState==4 && this.status==200) {
-			    				if(this.responseText!='<?php echo $_COOKIE['PSID']; ?>') {
-			    					var r = confirm("A computer has loggedin from your account. You are being logged out.");
-			    					if(r==true) {
-			    						window.location = "http://<?php echo $server; ?>/logout.php";
-			    					}
-			    					else {
-			    						window.location = "http://<?php echo $server; ?>/logout.php";	
-			    					}
-			    					
-			    				}
-			    			}
-			    		}
-			    		xml.open("GET", "http://content.<?php echo $server ?>/bscripts/actions/chksessid.php");
-			    		xml.withCredentials = true;
-			    		// xml.send();
-			    	}, 10000);
-
-			    	update_freqs();
-					
-			    }
-
-			});
-
-			function loadlazypgsugg() {
-				var xml = new XMLHttpRequest();
-				document.querySelector('.pgsugg .spinner').style.display = "none";
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-						document.querySelector('.pgsugg ul').innerHTML = resp;
-					} 
-				}
-				var formdata = new FormData();
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/pgsugg.php");
-				xml.withCredentials = true;
-				xml.send(formdata);
-			}
-
-			function alertmain(cont) {
-				document.querySelector('.alert_main .info_content span').innerHTML = cont;
-				document.querySelector('.alert_main').style.display = "block";
-				setTimeout(function(){
-					document.querySelector('.alert_main').style.display = "none";
-				}, 4200);
-			}
-
-			function enablebtn() {
-				try{
-				document.querySelector('.right_2 #editbtn').removeAttribute('disabled');
-				document.querySelector('.right_2 #editbtn').style.cursor = 'pointer';
-				}
-				catch(e) {
-					console.error(e);
-				}
-			}
-			
-			function open_nav_dropdown(e) {
-				var i = "";
-				if(e=='freq') {
-					var dom = document.querySelector('#ico1');
-					var dom_ico = document.querySelector('#ico1 i');
-					var dom_hg = document.querySelector('#ico1 .hghlgtr');
-					var dom_dropdown = document.querySelector(".freq_dropdown");
-					document.querySelector('#ico2').setAttribute('cdata', '1');
-					document.querySelector('#ico3').setAttribute('cdata', '1');
-					document.querySelector('#ico2').setAttribute('onmouseout', "remove_hover_ico('ico2')");
-					document.querySelector('#ico3').setAttribute('onmouseout', "remove_hover_ico('ico3')");
-					i="ico1";
-					document.querySelector('#ico1 i').classList.remove('active');
-					dom_dropdown.style.width = "350px";
-					dom_dropdown.style.height = "445px";
-				}
-				else if(e=='noti') {
-					var dom = document.querySelector('#ico2');
-					var dom_ico = document.querySelector('#ico2 i');
-					var dom_hg = document.querySelector('#ico2 .hghlgtr');
-					var dom_dropdown = document.querySelector(".noti_dropdown");
-					document.querySelector('#ico1').setAttribute('cdata', '1');
-					document.querySelector('#ico3').setAttribute('cdata', '1');
-					document.querySelector('#ico1').setAttribute('onmouseout', "remove_hover_ico('ico1')");
-					document.querySelector('#ico3').setAttribute('onmouseout', "remove_hover_ico('ico3')");
-					i='ico2';
-					document.querySelector('#ico2 i').classList.remove('active');
-					dom_dropdown.style.width = "350px";
-					dom_dropdown.style.height = "395px";
-				}
-				else {
-					var dom = document.querySelector('#ico3');
-					var dom_ico = document.querySelector('#ico3 i');
-					var dom_hg = document.querySelector('#ico3 .hghlgtr');
-					var dom_dropdown = document.querySelector(".usrstngs_dropdown");
-					document.querySelector('#ico2').setAttribute('cdata', '1');
-					document.querySelector('#ico1').setAttribute('cdata', '1');
-					document.querySelector('#ico2').setAttribute('onmouseout', "remove_hover_ico('ico2')");
-					document.querySelector('#ico1').setAttribute('onmouseout', "remove_hover_ico('ico1')");
-					i='ico3';
-				}
-
-				var rect = dom.getBoundingClientRect();
-				var rx = (window.innerWidth-rect.x)-(45/2+8);
-				dom_dropdown.style.right = rx.toString()+"px";
-
-				/* reset all ---------- */
-
-				document.querySelector('#ico1 i').style.color = "rgba(0, 0, 0, 0.5)";
-				document.querySelector('#ico1 .hghlgtr').style.background = "gray";
-				document.querySelector(".freq_dropdown").style.display = "none";
-
-				document.querySelector('#ico2 i').style.color = "rgba(0, 0, 0, 0.5)";
-				document.querySelector('#ico2 .hghlgtr').style.background = "gray";
-				document.querySelector(".noti_dropdown").style.display = "none";
-
-				document.querySelector('#ico3 i').style.color = "rgba(0, 0, 0, 0.5)";
-				document.querySelector('#ico3 .hghlgtr').style.background = "gray";
-				document.querySelector(".usrstngs_dropdown").style.display = "none";
-
-				 /* -------- */
-
-				var c_cdata = parseInt(dom.getAttribute('cdata'));
-
-				if(c_cdata%2==1) {
-					dom_ico.style.color = "var(--hover-color)";
-					dom_hg.style.background = "var(--hover-color)";
-					document.querySelector('.nav_main').style.borderBottom = "2px solid var(--hover-color)";
-					var n_cdata = c_cdata+1;
-					dom.setAttribute('cdata', n_cdata.toString());
-					dom_dropdown.style.display = "block";
-					dom.removeAttribute('onmouseout');
-					if(i=='ico1') {
-						load_freq();
-					}
-					else if(i=='ico2'){
-						load_noti();
-						document.querySelector('.noti_dropdown .mcont .bottom .noti_main').innerHTML = "";
-					}
-				}
-				else {
-					dom_ico.style.color = "rgba(0, 0, 0, 0.5)";
-					dom_hg.style.background = "gray";
-					document.querySelector('.nav_main').style.borderBottom = "1px solid rgba(0, 0, 0, 0.20)";
-					var n_cdata = c_cdata+1;
-					dom.setAttribute('cdata', n_cdata.toString());
-					dom_dropdown.style.display = "none";	
-					var fun= "remove_hover_ico('"+i+"');";
-					dom.setAttribute('onmouseout', fun);
-				}
-
-			}
-		// settings js // 
-		function signup_ifocus(i) {
-			var dom = document.querySelector('.'+i);
-			var hgh = document.querySelector('.'+i+' .highlighter');
-			hgh.style.background = "var(--hover-color)";
-		}
-		function remove_signup_ifocus(i) {
-			var dom = document.querySelector('.'+i);
-			var hgh = document.querySelector('.'+i+' .highlighter');
-			hgh.style.background = "rgba(0, 0, 0, 0.60)";
-		}
-
-		function dp_change() {
-			var dom = document.querySelector('#dpchange').files[0];
-			if(dom.size<=6291456) {
-				document.querySelector('.main_spinner').style.display = "flex";
-				var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-						setTimeout(function(){
-							document.querySelector('.main_spinner').style.display = "none";
-							if(resp=='nai_er') {	
-								alertmain('The File is not an Image.')
-							}	
-							else if(resp=='isset_er'){
-								alertmain('Server Error! Please Try again later.')
-							}
-							else {
-								document.querySelector('.main_settings .left .dp .img img').setAttribute('src', 'http://content.<?php echo $server; ?>/img_users/'+resp);
-							}
-						}, 800);
-					}
-				}
-				var formdata = new FormData();
-				formdata.append("file", dom);
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/temp/dpchange.temp.php");
-				xml.withCredentials = true;
-				xml.send(formdata);
-			}
-			else {
-				alertmain('The File is too Big. (Max-6mB)');
-			}
-		}
-
-		function animate_settings_toggle(n) {
-			var angle = $('.toggle_settings ul .angle');
-			var nn = n;
-			n = parseInt(n);
-
-			if(n==4) {
-				loadfriends();
-			}
-
-			var value;
-			if(n==1) {
-				value = 15;
-			}
-			else if(value==2){
-				value = 55;
-			}
-			else {
-				value = ((n-1)*40)+15;
-			}
-			
-			angle.animate({top: value}, 180, "swing");
-			document.querySelector('.toggle_settings ul li[id="selected"]').setAttribute('id', '');
-			
-			document.querySelector('.toggle_settings ul li[name="'+n+'"]').setAttribute('id', 'selected');
-
-			document.querySelector('.main_settings .right #selected').setAttribute('id', '');
-			document.querySelector('.main_settings .right .right_'+n).setAttribute('id', 'selected');
-
-		}
-		function togglepass(n, c) {
-			if(n=='show') {
-				if(c=='current') {
-					document.querySelector('.current .fa-eye').style.display = "none";
-					document.querySelector('.current .fa-eye-slash').style.display = "block";
-					document.querySelector('.current input').setAttribute('type', 'text');
-				}
-				else {
-					document.querySelector('.new .fa-eye').style.display = "none";
-					document.querySelector('.new .fa-eye-slash').style.display = "block";
-					document.querySelector('.new input').setAttribute('type', 'text');
-				}
-			}
-			else {
-				if(c=='current') {
-					document.querySelector('.current .fa-eye').style.display = "block";
-					document.querySelector('.current .fa-eye-slash').style.display = "none";
-					document.querySelector('.current input').setAttribute('type', 'password');
-				}
-				else {
-					document.querySelector('.new .fa-eye').style.display = "block";
-					document.querySelector('.new .fa-eye-slash').style.display = "none";
-					document.querySelector('.new input').setAttribute('type', 'password');
-				}
-			}
-		}
-
-		function usrncheck() {
-
-			document.querySelector('.right_1 .spinner').style.display = "none";
-			document.querySelector('.right_1 #usrnavl').style.display = "none";
-			document.querySelector('.right_1 #usrnnavl').style.display = "none";
-			var val = document.querySelector('.right_1 .username input').value;
-			if(val=='<?php echo $_SESSION['username']; ?>') {
-				document.querySelector('.right_1 .username input').setAttribute('toupdate', '0');
-			}
-			else {
-
-				document.querySelector('.right_1 #usrnavl').style.display = "none";
-				document.querySelector('.right_1 .spinner').style.display = "none";
-				document.querySelector('.right_1 .username input').setAttribute('toupdate', '0');
-				document.querySelector('.right_1 #usrnnavl').style.display = "none";
-
-				if(val.length>=7 && val.length<=18) {
-					
-					document.querySelector('.right_1 .spinner').style.display = "block";
-					var xml = new XMLHttpRequest();
-					xml.onreadystatechange = function() {
-						if(this.readyState==4 && this.status==200) {
-							var resp = this.responseText;
-							if(resp=='1') {
-								document.querySelector('.right_1 .spinner').style.display = "none";
-								document.querySelector('.right_1 #usrnnavl').style.display = "none";
-								document.querySelector('.right_1 .username input').setAttribute('toupdate', '1');
-								document.querySelector('.right_1 #usrnavl').style.display = "block";
-							}
-							else if(resp=='0') {
-								document.querySelector('.right_1 #usrnavl').style.display = "none";
-								document.querySelector('.right_1 .spinner').style.display = "none";
-								document.querySelector('.right_1 .username input').setAttribute('toupdate', '0');
-								document.querySelector('.right_1 #usrnnavl').style.display = "block";
-							}
-							else {
-								document.querySelector('.right_1 #usrnavl').style.display = "none";
-								document.querySelector('.right_1 .spinner').style.display = "none";
-								document.querySelector('.right_1 #usrnnavl').style.display = "block";
-								document.querySelector('.right_1 .username input').setAttribute('toupdate', '0');
-								alertmain(resp);
-								console.log(resp);
-							}
-						}
-					}
-					xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/usrncheck.php");
-					xml.withCredentials = true;
-					var formdata = new FormData();
-					formdata.append("value", val);
-					xml.send(formdata);
-				}
-				else {
-					document.querySelector('.right_1 .username input').setAttribute('toupdate', '0');
-				}
-
-			}
-
-
-		}
-
-		function agechk(date, month, year) {
-			var obj = new Date();
-
-			var curr_date = obj.getDate();
-			var curr_month = obj.getMonth()+1;
-			var curr_year = obj.getFullYear();
-
-			if((curr_year-year)>10) {
-				return 1;
-			}
-			else if((curr_year-year)==10 && (curr_date-date)>=0 && (curr_month-month)>=0){
-				return 1;
-			}
-			else {
-				return 0;
-			}
-
-		}
-
-		function updategeneral() {
-			document.querySelector(".main_spinner").style.display = "flex";
-			var username = document.querySelector('.right_1 .username input').value;
-			var bio = document.querySelector('.right_1 .bio textarea').value;
-			var day = document.querySelector('.right_1 .birthday select[name=day]').value.toString();
-			var month = document.querySelector('.right_1 .birthday select[name=month]').value.toString();
-			var year = document.querySelector('.right_1 .birthday select[name=year]').value.toString();
-			var birthday = day+"/"+month+"/"+year;
-
-			if(agechk(day, month, year)) {
-
-				var toupdateusername = document.querySelector('.right_1 .username input').getAttribute('toupdate');
-
-				var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-						setTimeout(function(){
-							document.querySelector(".main_spinner").style.display = "none";
-							alertmain("Account Updated!");
-						}, 300);
-					}
-				}
-				var formdata = new FormData();
-				formdata.append("username", username);
-				formdata.append("bio", bio);
-				formdata.append("birthday", birthday);
-				formdata.append("toupdateusername", toupdateusername);
-				formdata.append("which", "general");
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/update_user.php");
-				xml.withCredentials = true;
-				xml.send(formdata);
-
-			}
-			else{
-				document.querySelector(".main_spinner").style.display = "none";
-				alertmain('Your age should be atleast 10 years.');
-			}
-
-		}
-
-		function updatesocial() {
-			var facebook = document.querySelector('.right_2 .facebook input').value;
-			var instagram = document.querySelector('.right_2 .instagram input').value;
-			var twitter = document.querySelector('.right_2 .twitter input').value;
-			document.querySelector(".main_spinner").style.display = "flex";
-
-			var xml=new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.readyState==4 && this.status==200) {
-					var resp = this.responseText;
-					if(resp=='1') {
-						setTimeout(function(){
-							document.querySelector(".main_spinner").style.display = "none";
-							alertmain("Your social media accounts are Updated!");						
-						}, 500);
-					}
-					else {
-						console.log(resp);
-					}
-				}
-			}
-			var formdata = new FormData();
-			formdata.append('facebook', facebook);
-			formdata.append('instagram', instagram);
-			formdata.append('twitter', twitter);
-			formdata.append('which', 'social')
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/update_user.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-		}
-
-		function password_btn_toggle() {
-			var passlen = document.querySelector('.right_3 .new input').value.length;
-			if(passlen>=8) {
-				document.querySelector('.right_3 .change_pass_btn').removeAttribute('disabled');
-				document.querySelector('.right_3 .change_pass_btn').style.cursor = 'pointer';
-			}
-			else {
-				document.querySelector('.right_3 .change_pass_btn').setAttribute('disabled', 'true');
-				document.querySelector('.right_3 .change_pass_btn').style.cursor = 'auto';	
-			}
-		}
-
-		function updatepassword() {
-			var current_pass = document.querySelector(".right_3 .current input").value;
-			var new_pass = document.querySelector(".right_3 .new input").value;
-			document.querySelector('.main_spinner').style.display = "flex";
-
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function(){
-				if(this.readyState==4 && this.status==200) {
-					var resp = this.responseText;
-					setTimeout(function(){
-						document.querySelector('.main_spinner').style.display = "none";
-						if(resp=='1') {
-							alertmain("Password Changed!");
-						}						
-						else if(resp=='no'){
-							alertmain("Current Password is wrong!");
-						}
-						else {
-							alertmain("Server Error! Please try again later.");
-						}
-					}, 650);
-				}
-			}	
-			var formdata = new FormData();
-			formdata.append('current', current_pass);
-			formdata.append('new', new_pass);
-			formdata.append('which', 'security');
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/update_user.php");
-			xml.withCredentials = true;
-			xml.send(formdata);	
-
-		}
-
-		function loadfriends(offset, withload) {
-
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.status==200 && this.readyState==4) {
-					var resp = this.responseText;
-					try {
-						var json = JSON.parse(resp);
-						document.querySelector('.right_4 .top h1 span').innerHTML = "("+json.count+")";
-						setTimeout(function(){
-							if(withload==undefined) {
-								document.querySelector('.right_4 .bottom .main').innerHTML = json.data;
-							}
-							else {
-								document.querySelector('.right_4 .bottom .main').innerHTML += json.data;
-							}
-							document.querySelector('.right_4 .spinner_main').style.display = "none";
-						}, 250);
-					}
-					catch(err) {
-						document.querySelector('.right_4 .top h1 span').innerHTML = "(0)";
-						document.querySelector('.right_4 .bottom .main').innerHTML = resp;
-					}
-				}
-			}
-			var formdata = new FormData();
-			if(offset==undefined) {
-				formdata.append('offset', 0);
-			}
-			else {
-				formdata.append('offset', offset);
-			}
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/getfriendfromstorage.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-
-		}
-
-		function unfriend(key, id) {
-			var spinner = document.querySelector('#id'+id+' .spinner');
-			var icon = document.querySelector('#id'+id+' i');
-			spinner.style.display = "block";
-			icon.style.display = "none";
-
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.readyState==4 && this.status==200) {
-					var resp = this.responseText;
-					
-					if(resp==1) {
-						setTimeout(function(){
-							document.querySelector('#id'+id+' .unfriend_confirm').style.display = "block";
-							spinner.style.display = "none";
-						}, 500);
-					}
-					else {
-						spinner.style.display = "none";
-						alertmain('An error Occured!');
-						console.log(resp);
-					}
-
-				}
-			}
-			var formdata = new FormData();
-			formdata.append('key', key);
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/unfriend.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-		}
-
-		// settings js ends //
-
-		// Friend Requests //
-		
-
-		function accept_request(key, id) {
-			document.querySelector('#overlay_'+id).style.display = "flex";
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange= function() {
-				if(this.readyState==4 && this.status==200) {
-					var resp = this.responseText;
-					if(resp==1) {
-					setTimeout(function(){
-						document.querySelector("#freq-items_"+id+" #accept_request").innerHTML = 'Accepted &#10004;';
-						document.querySelector("#freq-items_"+id+" #accept_request").style.width = "70px";
-						document.querySelector("#freq-items_"+id+" #accept_request").setAttribute("disabled", "true");
-						document.querySelector("#freq-items_"+id+" #accept_request").style.cursor = "auto";
-						document.querySelector("#freq-items_"+id+" #decline_request").setAttribute("disabled", "true");
-						document.querySelector("#freq-items_"+id+" #decline_request").style.cursor = "auto";
-						document.querySelector("#freq-items_"+id+" #accept_request").removeAttribute('onclick');
-						document.querySelector("#freq-items_"+id+" #decline_request").removeAttribute('onclick');
-						document.querySelector('#overlay_'+id).style.display = "none";
-					}, 650);
-
-					var xml_req = new XMLHttpRequest();
-					xml_req.onreadystatechange = function() {
-						if(this.readyState==4 && this.status==200) {
-						}
-					}
-					var formdata = new FormData();
-					var content = "<?php echo $_SESSION['username']; ?>"+" accepted your friend request.";
-					formdata.append("key", key);
-					formdata.append("which", "sendnoti");
-					formdata.append("content", content);
-					xml_req.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/notifications.php");
-					xml_req.withCredentials = true;
-					xml_req.send(formdata);
-					
-				}
-				else {
-					alertmain('An error Occured!');
-					console.log(resp);
-				}
-
-				}
-
-			}
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/freq.php");
-			xml.withCredentials = true;
-			var formdata = new FormData();
-			formdata.append("which", "accept");
-			formdata.append("key", key);
-			xml.send(formdata);
-		}
-
-		function decline_request(key, id) {
-			document.querySelector('#overlay_'+id).style.display = "flex";
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange= function() {
-				if(this.readyState==4 && this.status==200) {
-					var resp = this.responseText;
-
-					if(resp==1) {
-						setTimeout(function(){
-							document.querySelector("#freq-items_"+id+" #decline_request").innerHTML = 'Declined &#10004;';
-							document.querySelector("#freq-items_"+id+" #decline_request").style.width = "70px";
-							document.querySelector("#freq-items_"+id+" #decline_request").setAttribute("disabled", "true");
-							document.querySelector("#freq-items_"+id+" #decline_request").style.cursor = "auto";
-							document.querySelector("#freq-items_"+id+" #accept_request").setAttribute("disabled", "true");
-							document.querySelector("#freq-items_"+id+" #accept_request").style.cursor = "auto";
-							document.querySelector("#freq-items_"+id+" #accept_request").removeAttribute('onclick');
-							document.querySelector("#freq-items_"+id+" #decline_request").removeAttribute('onclick');
-							document.querySelector('#overlay_'+id).style.display = "none";
-						}, 650);
-					}
-					else {
-						alertmain('An Error Occured!');
-						console.log(resp);
-					}
-
-				}
-			}
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/freq.php");
-			xml.withCredentials = true;
-			var formdata = new FormData();
-			formdata.append("which", "decline");
-			formdata.append("key", key);
-			formdata.append("id", id);
-			xml.send(formdata);
-		}
-
-		// Friend Requests ends //
-
-
-		// Create Page //
-
-		function upload_temp_page_dp() {
-			var dom = document.querySelector('.bottom_maincreatepage form .dps input').files[0];
-			if(dom.size<=6291456) {
-				document.querySelector('.bottom_maincreatepage .dps .spinner').style.display = "block";
-				var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-						setTimeout(function(){
-							document.querySelector('.bottom_maincreatepage .dps .spinner').style.display = "none";
-							if(resp=='nai_er') {	
-								alertmain('The File is not an Image.')
-							}	
-							else if(resp=='isset_er'){
-								alertmain('Server Error! Please Try again later.')
-							}
-							else {
-								document.querySelector('.bottom_maincreatepage form .dps input').setAttribute('src', resp);
-								document.querySelector('.bottom_maincreatepage form .dps .upload img').setAttribute('src', 'http://content.<?php echo $server; ?>/temp_uploads/'+resp);
-								document.querySelector('.bottom_maincreatepage form .dps .upload img').style.display = "block";
-								document.querySelector('.bottom_maincreatepage form .dps .upload').setAttribute('class', 'upload upload-after');
-								document.querySelector('.bottom_maincreatepage form .dps .upload').setAttribute('upload-after-text', 'Click to Change');
-							}
-						}, 800);
-					}
-				}
-				var formdata = new FormData();
-				formdata.append("file", dom);
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/temp/imageupload.temp.php");
-				xml.withCredentials = true;
-				xml.send(formdata);
-			}
-			else {
-				alertmain('The File is too Big. (Max-6mB)');
-			}
-		}		
-
-		function createpage() {
-			var name = document.querySelector('.bottom_maincreatepage form .page_name input').value;
-			var email = document.querySelector('.bottom_maincreatepage form .page_email input').value;
-			var facebook = document.querySelector('.bottom_maincreatepage form .facebook input').value;
-			var instagram = document.querySelector('.bottom_maincreatepage form .instagram input').value;
-			var twitter = document.querySelector('.bottom_maincreatepage form .twitter input').value;
-			var pic = document.querySelector('.bottom_maincreatepage form .dps input').getAttribute('src');
-			var about = document.querySelector('.bottom_maincreatepage form .page_about textarea').value;
-
-			document.querySelector('.main_spinner').style.display = "flex";
-
-			if(about=='') {
-				about = '-';
-			}
-
-			if(pic=='') {
-				pic = '-';
-			}
-
-			if(facebook=='') {
-				facebook = '-';
-			}
-
-			if(instagram=='') {
-				instagram = '-';
-			}
-
-			if(twitter=='') {
-				twitter = '-';
-			}
-
-			if(name=='' || email=='') {
-				alertmain("Please fill the name and email entries.");
-			}else {
-				var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-
-						setTimeout(function(){
-							document.querySelector('.main_spinner').style.display = "none";
-							if(resp=='email_err') {
-								alertmain("Please enter a real email.");
-							}
-							else if(resp=='err') {
-								alertmain("Please try again later.");
-							}
-							else if(resp=='nemail_err') {
-								alertmain("Page with same email already exists.");
-							}
-							else if(resp=='char_err') {
-								alertmain("Page Name should not contain spaces or special letters.");
-							}
-							else if(resp=='len_err') {
-								alertmain("Pagename length should be greator than 4 and less than 19.");
-							}
-							else if(resp=='1'){
-								alertmain("Your Page has been created.");
-							}
-							else {
-								console.log(resp);
-								alertmain("Server Error! Please Try again later.");
-							}
-						}, 700);						
-					}
-				}
-				var formdata = new FormData();
-				formdata.append('name', name);
-				formdata.append('email', email);
-				formdata.append('facebook', facebook);
-				formdata.append('instagram', instagram);
-				formdata.append('twitter', twitter);
-				formdata.append('pic', pic);
-				formdata.append('about', about);
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/createpage.php");
-				xml.withCredentials = true;
-				xml.send(formdata);
-			}
-
-			return false;
-
-		}
-
-		// Create Page ends //
-
-
-		// My Pages //
-
-		function open_mypageedit(which, dp, name, post_count, followers, about, social, email) {
-			document.querySelector('.settings_mypages_overlay').style.display = "block";
-			document.querySelector('.settings_mypages_overlay').setAttribute('which', which);
-			document.querySelector('.settings_mypages_overlay .main .top span h2 span').innerHTML = "("+decodeURI(name)+")";
-			document.querySelector('.settings_mypages_overlay .main .bottom .name input').setAttribute('value', decodeURI(name));
-			document.querySelector('.settings_mypages_overlay .main .bottom .about textarea').innerHTML = decodeURIComponent(about);
-			document.querySelector('.settings_mypages_overlay .main .bottom .email input').setAttribute('value', decodeURIComponent(email));
-
-			social = JSON.parse(decodeURIComponent(social));
-			var fb = social.facebook;
-			var instagram = social.instagram;
-			var twitter = social.twitter;
-
-			document.querySelector('.settings_mypages_overlay .main .bottom .social .facebook input').setAttribute('value', fb);
-			document.querySelector('.settings_mypages_overlay .main .bottom .social .instagram input').setAttribute('value', instagram);
-			document.querySelector('.settings_mypages_overlay .main .bottom .social .twitter input').setAttribute('value', twitter);
-
-			if(dp=='-') {
-				document.querySelector('.settings_mypages_overlay .main .bottom .dp .img img').setAttribute('src', 'http://content.<?php echo $server; ?>/img_pages/yellow.jpg');
-			}
-			else {
-				document.querySelector('.settings_mypages_overlay .main .bottom .dp .img img').setAttribute('src', 'http://content.<?php echo $server; ?>/img_pages/'+dp);
-			}
-
-		}
-
-		function updatepageinfo(which) {
-			document.querySelector('.main_spinner').style.display = "flex";
-			var name = document.querySelector('.settings_mypages_overlay .main .bottom .name input').value;
-			var about = document.querySelector('.settings_mypages_overlay .main .bottom .about textarea').value;
-			var photo = document.querySelector('.settings_mypages_overlay .main .bottom .dp .img img').getAttribute('src');
-			var email = document.querySelector('.settings_mypages_overlay .main .bottom .email input').value;
-
-			var fb = document.querySelector('.settings_mypages_overlay .main .bottom .social .facebook input').value;
-			var twitter = document.querySelector('.settings_mypages_overlay .main .bottom .social .twitter input').value;
-			var instagram = document.querySelector('.settings_mypages_overlay .main .bottom .social .instagram input').value;
-
-			if(fb=='') {
-				fb = '-';
-			}
-
-			if(twitter=='') {
-				twitter == '-';
-			}
-
-			if(instagram=='') {
-				instagram = '-';
-			}
-
-			if(photo.includes("yellow.jpg")) {
-				photo = "-";
-			}
-
-			var social = {facebook: fb, twitter: twitter, instagram: instagram};
-			social = JSON.stringify(social);
-
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.status==200 && this.readyState==4) {
-					var resp = this.responseText;
-					document.querySelector('.main_spinner').style.display = "none";
-					if(resp=='1') {
-						alertmain("Done!");
-						setTimeout(function(){
-							document.querySelector('.settings_mypages_overlay').style.display = 'none';
-						}, 1000);
-					}
-					else {
-						alertmain(resp);
-					}
-				}
-			}
-			var formdata = new FormData();
-			formdata.append("name", name);
-			formdata.append("about", about);
-			formdata.append("photo", photo);
-			formdata.append("email", email);
-			formdata.append("social", social);
-			formdata.append("pid", which);
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/updatemypageinfo.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-		
-		}
-
-		function dp_change_page() {
-			var dom = document.querySelector('#dpchangepage').files[0];
-			if(dom.size<=6291456) {
-				document.querySelector('.main_spinner').style.display = "flex";
-				var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-						setTimeout(function(){
-							document.querySelector('.main_spinner').style.display = "none";
-							if(resp=='nai_er') {	
-								alertmain('The File is not an Image.')
-							}	
-							else if(resp=='isset_er'){
-								alertmain('Server Error! Please Try again later.')
-							}
-							else {
-								document.querySelector('.settings_mypages_overlay .main .bottom .dp .img img').setAttribute('src', 'http://content.<?php echo $server; ?>/temp_uploads/'+resp);
-							}
-						}, 800);
-					}
-				}
-				var formdata = new FormData();
-				formdata.append("file", dom);
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/temp/dpchangepage.temp.php");
-				xml.withCredentials = true;
-				xml.send(formdata);
-			}
-			else {
-				alertmain('The File is too Big. (Max-6mB)');
-			}
-		}
-
-		function load_mypages() {
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.readyState==4 && this.status==200) {
-					var resp = this.responseText;
-					if(resp=='0') {
-						setTimeout(function(){
-							document.querySelector(".main_mypages .bottom .spinner_").style.display = "none"
-							document.querySelector(".main_mypages .bottom .items").innerHTML = "<span style='position: absolute;left: 50%;color: gray;text-align: center;top: 10px;transform: translate(-50%, 0%)'>You do not have any page.</span>";
-						}, 300);
-					}
-					else {
-						setTimeout(function(){
-							document.querySelector(".main_mypages .bottom .spinner_").style.display = "none"
-							document.querySelector(".main_mypages .bottom .items").innerHTML = resp;
-						}, 300);
-					}
-				}
-			}
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/mypages_load.php");
-			xml.withCredentials=true;
-			xml.send();
-		}
-
-		function open_uploadpost_overlay(which, name, pc, pagedp) {
-			document.querySelector('.upload_post_overlay').style.display = "block";
-			document.querySelector('.upload_post_overlay').setAttribute('which', which);
-			document.querySelector('.upload_post_overlay').setAttribute('name', name);
-			document.querySelector('.upload_post_overlay').setAttribute('pc', pc);
-			document.querySelector('.upload_post_overlay').setAttribute('pagedp', pagedp);
-		}
-
-		function uploadmemeimage() {
-			var dom = document.querySelector('#memeuploadinput').files[0];
-			if(dom.size<=6291456) {
-				document.querySelector('.uploadimage .iconcontainer .spinner').style.display = "block";
-				var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-						setTimeout(function(){
-							document.querySelector('.uploadimage .iconcontainer .spinner').style.display = "none";
-							if(resp=='nai_er') {	
-								alertmain('The File is not an Image.');
-								document.querySelector('.upload_post_overlay .main .top button').setAttribute('disabled', 'true');
-								document.querySelector('.upload_post_overlay .main .top button').style.cursor = "auto";
-							}	
-							else if(resp=='isset_er'){
-								alertmain('Server Error! Please Try again later.');
-								document.querySelector('.upload_post_overlay .main .top button').setAttribute('disabled', 'true');
-								document.querySelector('.upload_post_overlay .main .top button').style.cursor = "auto";
-							}
-							else {
-								$('.uploadimage').animate({top: "10px"}, "fast", "linear");
-
-								document.querySelector('.uploadimage .iconcontainer i').setAttribute('class', 'far fa-exchange');
-								document.querySelector('.uploadimage #infoupload').innerHTML = "Click to Change";
-								document.querySelector('.imagecontainer').style.display = "block";
-								document.querySelector('.imagecontainer img').setAttribute('src', "http://content.<?php echo $server; ?>/temp_uploads/"+resp); 
-								document.querySelector('.upload_post_overlay .main .top button').removeAttribute('disabled');
-								document.querySelector('.upload_post_overlay .main .top button').style.cursor = "pointer";
-							}
-						}, 800);
-					}
-				}
-				var formdata = new FormData();
-				formdata.append("file", dom);
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/temp/memeimageupload.temp.php");
-				xml.withCredentials = true;
-				xml.send(formdata);
-			}
-			else {
-				alertmain('The File is too Big. (Max-6mB)');
-			}	
-		}
-
-		function addtagstoggle() {
-			document.querySelector('.upload_post_overlay .bottom .right .addtagsinfo').style.display = "none";
-			document.querySelector('.upload_post_overlay .bottom .right .addtags_container').style.display = "block";
-			document.querySelector('.upload_post_overlay .bottom .right .addtags').style.display = "block";
-		}
- 
-		function uploadmeme() {
-			//.upload_post_overlay > which
-			//.imagecontainer img > src
-			var tags = [];
-			var tagslen = $('.addtags input[type=checkbox]:checked').length;
-			var i;
-			if(tagslen>0) {
-				var stags = $('.addtags input[type=checkbox]:checked');
-				var value;
-				for(i=0;i<=tagslen-1;i++) {
-					value = stags[i].value;
-					tags.push(value);
-				}
-			}
-			else {
-				tags = [];
-			}
-
-			var img = document.querySelector('.imagecontainer img').getAttribute('src');
-			var which = document.querySelector('.upload_post_overlay').getAttribute('which');
-			var caption = document.querySelector('.upload_post_overlay .right .caption textarea').value;
-			var pagename = document.querySelector('.upload_post_overlay').getAttribute('name');
-			var pc = document.querySelector('.upload_post_overlay').getAttribute('pc');
-
-			var pagedp = document.querySelector('.upload_post_overlay').getAttribute('pagedp');
-
-			document.querySelector('.upload_post_overlay .main .top .spinner').style.display = "block";
-
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.status==200 && this.readyState==4) {
-					var resp = this.responseText;
-					setTimeout(function(){
-						document.querySelector('.upload_post_overlay .main .top .spinner').style.display = "none";
-
-						if(resp==1) {
-							alertmain("Upload Complete!");
-						}
-						else {
-							alertmain("Server Error! Please Try again Later.");
-							console.log(resp);
-						}
-
-						document.querySelector('.overlay').innerHTML = "";
-						document.querySelector('.overlay').style.display = "none";
-						document.querySelector('.uploadimage .iconcontainer i').setAttribute('class', 'far fa-arrow-alt-up');
-						document.querySelector('.uploadimage #infoupload').innerHTML = "(Only JPEG, PNG or JPG)";
-						document.querySelector('.imagecontainer').style.display = "none";
-						document.querySelector('.upload_post_overlay .main .top button').setAttribute('disabled', 'true');
-						document.querySelector('.upload_post_overlay .main .top button').style.cursor = "auto";
-						document.querySelector('.imagecontainer img').setAttribute('src', "");
-
-
-						document.querySelector('.upload_post_overlay').style.display = "none";
-						document.querySelector('.upload_post_overlay').removeAttribute('which');
-						document.querySelector('.upload_post_overlay').removeAttribute('name');
-						document.querySelector('.upload_post_overlay').removeAttribute('pc');
-						document.querySelector('.upload_post_overlay').removeAttribute('pagedp');
-
-
-					}, 500);
-				}
-			}
-			var formdata = new FormData();
-			formdata.append('which', which);
-			formdata.append('img', img);
-			formdata.append('tags', JSON.stringify(tags));
-			formdata.append('pagename', pagename);
-			formdata.append('pc', pc);
-			formdata.append('pagedp', pagedp);
-			if(caption) {
-				formdata.append('caption', caption);
-			}
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/uploadmeme.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-
-		}
-
-		// ----------------------------------------------- //
-
-
-		/* main */
-
 		function download_post(pgname, imagelink) {
 			var xml = new XMLHttpRequest();
 			xml.onreadystatechange = function() {
-				if(this.readyState==4 && this.status==404) {
-					var xhr = new XMLHttpRequest();
-					xhr.onreadystatechange = function() {
-						if(this.readyState==4 && this.status==200) {
-							document.querySelector('.downloadmeme').setAttribute('href', 'http://content.<?php echo $server; ?>/labelled_images/');
-							document.querySelector('.downloadmeme').setAttribute('download', imagelink);
-							/*document.querySelector('.downloadmeme').click();*/
-						}
-					}
-					xhr.open("GET", "http://localhost:5000/labelimage?pname="+pgname+"&imlink="+imagelink);
-					xhr.send();
-				}
-				else if(this.readyState==4 && this.status==200){
-					document.querySelector('.downloadmeme').setAttribute('href', 'http://content.<?php echo $server; ?>/labelled_images/');
+				if(this.readyState==4 && this.status==200){
+					document.querySelector('.downloadmeme').setAttribute('href', 'http://<?php echo $server; ?>/labelled_images/'+imagelink);
 					document.querySelector('.downloadmeme').setAttribute('download', imagelink);
-					/*document.querySelector('.downloadmeme').click();*/
+					document.querySelector('.downloadmeme').click();
 				}
 			}
-			xml.open("GET", "http://content.<?php echo $server; ?>/labelled_images/"+imagelink);
+        	xml.onerror = function() {
+            	console.clear();
+            	var xhr = new XMLHttpRequest();
+					xhr.onreadystatechange = function() {
+						if(this.readyState==4 && this.status==200) {
+							document.querySelector('.downloadmeme').setAttribute('href', 'http://<?php echo $server; ?>/labelled_images/'+imagelink);
+							document.querySelector('.downloadmeme').setAttribute('download', imagelink);
+							document.querySelector('.downloadmeme').click();
+						}
+					}
+					xhr.open("GET", "http://localhost/memelok/image/labelimage?pname="+pgname+"&imlink="+imagelink);
+					xhr.send();
+            }
+			xml.open("HEAD", "http://<?php echo $server; ?>/labelled_images/"+imagelink);
 			xml.send();
 	
 		}
 
-		function slidedrop_post(dom, id) {
-			var data = parseInt(dom.getAttribute('dataclick'));
-
-			if(data%2==0) {
-				document.querySelector('#f'+id+' .top .extraicon i').style.color = 'var(--hover-color)';
-				document.querySelector('#f'+id+' .top .extraicon i').style.fontWeight = 'bolder';
-				document.querySelector('#f'+id+' .top .extraicon i').style.fontSize = '18px';
-				document.querySelector('#f'+id+' .top').style.borderBottom = "2px solid var(--hover-color)";
-				document.querySelector('#f'+id+' .top .pdp').style.border = "2px solid var(--hover-color)";
-				$('#drop_'+id).slideDown(200, 'swing');
-				dom.setAttribute('dataclick', '1');
-			}
-			else {
-				document.querySelector('#f'+id+' .top .extraicon i').style.color = '#222';
-				document.querySelector('#f'+id+' .top .extraicon i').style.fontWeight = 'bold';
-				document.querySelector('#f'+id+' .top .extraicon i').style.fontSize = '16px';
-				document.querySelector('#f'+id+' .top').style.borderBottom = "1px solid var(--main-border)";
-				document.querySelector('#f'+id+' .top .pdp').style.border = "1px solid var(--main-border)";
-				$('#drop_'+id).slideUp("fast");
-				dom.setAttribute('dataclick', '0');	
-			}
-
-		}
-
-		function unfollowpage_thrposts(which, id) {
-			document.querySelector('#f'+id+' .top .extraicon i').style.color = '#222';
-			document.querySelector('#f'+id+' .top .extraicon i').style.fontWeight = 'bold';
-			document.querySelector('#f'+id+' .top .extraicon i').style.fontSize = '16px';
-			document.querySelector('#f'+id+' .top').style.borderBottom = "1px solid var(--main-border)";
-			document.querySelector('#f'+id+' .top .pdp').style.border = "1px solid var(--main-border)";
-			$('#drop_'+id).slideUp("fast");
-			document.querySelector('#f'+id+" .top .extraicon i").setAttribute('dataclick', '0');	
-
-			var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-						setTimeout(function(){
-							if(resp==1) {
-								alertmain("Unfollowed!");
-							}	
-							else if(resp==0){
-								alertmain('An error occured.');
-							}
-							else {
-								alertmain(resp);
-							}
-						}, 40);
-					}
-				}
-				var formdata = new FormData();
-				formdata.append("pid", which);
-				formdata.append('action', 'unfollow');
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/followpage.php");
-				xml.withCredentials = true;
-				xml.send(formdata);	
-
-		}
-
-		function followpage_thrposts(which, id) {
-			document.querySelector('#f'+id+' .top .extraicon i').style.color = '#222';
-			document.querySelector('#f'+id+' .top .extraicon i').style.fontWeight = 'bold';
-			document.querySelector('#f'+id+' .top .extraicon i').style.fontSize = '16px';
-			document.querySelector('#f'+id+' .top').style.borderBottom = "1px solid var(--main-border)";
-			document.querySelector('#f'+id+' .top .pdp').style.border = "1px solid var(--main-border)";
-			$('#drop_'+id).slideUp("fast");
-			document.querySelector('#f'+id+" .top .extraicon i").setAttribute('dataclick', '0');	
-
-			var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.readyState==4 && this.status==200) {
-						var resp = this.responseText;
-						setTimeout(function(){
-							if(resp==1) {
-								alertmain("Followed!");
-							}	
-							else if(resp==0){
-								alertmain('An error occured.');
-							}
-							else {
-								alertmain(resp);
-							}
-						}, 40);
-					}
-				}
-				var formdata = new FormData();
-				formdata.append("pid", which);
-				formdata.append('action', 'follow');
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/followpage.php");
-				xml.withCredentials = true;
-				xml.send(formdata);	
-
-		}
-
-		function reacttopost(which, mid, domid) {
-			if(which=='positive') {
-				document.querySelector('#f'+domid+' .post_actions .left i').setAttribute('id', 'animatepositive');
-				document.querySelector('#f'+domid+' .post_actions .left span').style.fontWeight = "bold";
-				document.querySelector('#f'+domid+' .post_actions .left span').style.color = "var(--hover-color)";
-				document.querySelector('#f'+domid+' .post_actions .left span').style.fontSize = "13px";	
-
-			}
-			else {
-
-			}
-
-			if(which=='positive') {
-				var count = parseInt(document.querySelector('#f'+domid+' .post_actions #like_count').getAttribute('data-react'));
-				count += 1;
-				document.querySelector('#f'+domid+' .post_actions #like_count').setAttribute('data-react', count.toString());
-				document.querySelector('#f'+domid+' .post_actions #like_count').innerHTML = "("+count.toString()+")";
-				
-				document.querySelector('#f'+domid+' .post_actions .left').removeAttribute('onclick');
-				document.querySelector('#f'+domid+' .post_actions .left').style.cursor = "auto";
-
-				document.querySelector('#f'+domid+' .post_actions .right').removeAttribute('onclick');
-				document.querySelector('#f'+domid+' .post_actions .right').style.cursor = "auto";
-			}
-			else {
-				var count = parseInt(document.querySelector('#f'+domid+' .post_actions #dislike_count').getAttribute('data-react'));
-				count += 1;
-				document.querySelector('#f'+domid+' .post_actions #dislike_count').setAttribute('data-react', count.toString());
-				document.querySelector('#f'+domid+' .post_actions #dislike_count').innerHTML = "("+count.toString()+")";
-
-				document.querySelector('#f'+domid+' .post_actions .left').removeAttribute('onclick');
-				document.querySelector('#f'+domid+' .post_actions .left').style.cursor = "auto";
-
-				document.querySelector('#f'+domid+' .post_actions .right').removeAttribute('onclick');
-				document.querySelector('#f'+domid+' .post_actions .right').style.cursor = "auto";
-
-			}
-
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.status==200 && this.readyState==4) {
-					var resp = this.responseText;
-					if(resp=='1') {
-
-					}
-					else {
-						console.log(resp);
-						alertmain("Couldn't react to the post");
-					}
-				}
-			}
-			var formdata = new FormData();
-			formdata.append("mid", mid);
-			formdata.append("which", which);
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/reacttopost.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-		}
- 
-		/* ------------------------------------------ */
-
-		/* CHAT */
-
-		function loadlazychat() {
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.readyState == 4 && this.status==200) {
-					var resp = this.responseText;
-					try {
-						resp = JSON.parse(resp);
-						var count = resp['count'];
-						var data = resp['data'];
-
-						try {
-							document.querySelector('.onnfrnds').innerHTML = data;
-							if(document.querySelector('.onlinefrnds #line').getAttribute('data-value').includes('On')) {
-
-								document.querySelector('.onlinefrnds #line').setAttribute('data-value', 'Online Friends ('+count+')');
-								document.querySelector('.onlinefrnds #line').setAttribute('f_count', count);
-							}
-							else {
-
-							}
-						}
-						catch(err) {
-
-						}	
-					}
-					catch(err) {
-						document.querySelector('.onlinefrnds #line').setAttribute('data-value', 'Online Friends (0)');
-						document.querySelector('.onnfrnds').innerHTML = resp;
-					}
-
-					document.querySelector("#offonchatspin").style.display = "none";							
-				}
-			}
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/onlinefrnds.php");
-			xml.withCredentials = true;
-			xml.send();
-		}
-
-		function chatanimation() {
-				document.querySelector('.onlinefrnds #line').setAttribute("class", "anim");
-
-				setTimeout(function() {
-					document.querySelector('.onlinefrnds #line').setAttribute("class", "");
-				}, 900);		
-
-				var changedata = parseInt(document.querySelector('.onlinefrnds #line').getAttribute('data-change'));
-
-				if(changedata%2==1) {
-					document.querySelector('.onnfrnds').style.display = "none";
-					document.querySelector('#offonchatspin').style.display = "block";
-					setTimeout(function() {
-						document.querySelector('#offonchatspin').style.display = "none";
-						document.querySelector('.chathistory').style.display = "block";	
-						document.querySelector('.onlinefrnds #line').setAttribute('data-value', 'Chat History');
-					}, 1250);
-
-					clearInterval(loadchatinterval);
-
-					loadchathistory(0, 12, null);
-					document.querySelector('.chatwindow').setAttribute('data-which', 'history');
-
-					try {
-						document.querySelector('.right_more_ i').removeAttribute('id');
-					}
-					catch(err) {
-
-					}
-				}	
-				else {
-					document.querySelector('.onnfrnds').style.display = "block";
-					document.querySelector('.chathistory').style.display = "none";
-					document.querySelector('.onlinefrnds #line').setAttribute('data-value', 'Online Friends (0)');
-					var state = document.querySelector('.left_divider .top_heading').getAttribute('state');
-
-					clearInterval(loadchathistoryinterval);
-
-					if(state=='enabled') {
-
-						loadchatinterval = setInterval(function(){
-							loadlazychat();
-						}, 2500);
-						document.querySelector('.chatwindow').setAttribute('data-which', 'chat');
-					}
-					else {
-
-					}
-				}
-
-				changedata += 1;
-
-				document.querySelector('.onlinefrnds #line').setAttribute('data-change', changedata.toString());
-
-			}
-
-			function disablechat() {
-				var data = document.querySelector('.left_more_').getAttribute('cdata');
-				if(parseInt(data)%2==1) {
-					clearInterval(loadchatinterval);
-					document.querySelector('.onnfrnds').innerHTML = "";
-					document.querySelector('#offonchatspin').style.display = "block";
-
-					document.querySelector('.left_divider .top_heading').setAttribute('state', 'disabled');
-
-
-					setTimeout(function() {
-						document.querySelector('.center_more_').style.color = "#cc0000";
-						document.querySelector('#offonchatspin').style.display = "none";
-						document.querySelector('.onnfrnds').innerHTML = "";
-						document.querySelector('.onnfrnds').innerHTML = "<span class='chat_off_warning'><br><h1>You are Offline!</h1><br><font style='color: #262626'>Click the power button</font> <br> <i class='fas fa-power-off fa-4x' style='position: relative;top:2px;color: #262626'></i> <br> <font style='position: relative;top: 4px;'>to enable Chat.</font></span>";
-						document.querySelector('.onnfrnds').innerHTML = "<img src='img/panda_offline3.jpg' width='260' height='260'>";
-						document.querySelector('.onlinefrnds #line').setAttribute('data-value', 'Online Friends (0)');
-					}, 2001);
-				}
-				else {
-
-					document.querySelector('#offonchatspin').style.display = "block";
-					document.querySelector('.onnfrnds').innerHTML = "";
-
-					document.querySelector('.left_divider .top_heading').setAttribute('state', 'enabled');
-
-
-					setTimeout(function(){
-						document.querySelector('.center_more_').style.color = "#00b300";
-						loadchatinterval = setInterval(function(){loadlazychat();}, 2500);
-					}, 1500);
-				}
-				var newdata = parseInt(data)+1;
-				document.querySelector('.left_more_').setAttribute('cdata', newdata.toString());
-			}
-
-			function loadchathistory(offset, limit,total) {
-				offset = parseInt(offset);
-				limit = parseInt(limit);
-				if(total==null) {
-
-				}
-				else {
-					total = parseInt(total);
-				}
-
-				var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.status==200 && this.readyState==4) {
-						var resp = this.responseText;
-						if(resp==0) {
-							document.querySelector('.chathistory').innerHTML = "<center><span style='font-size:12px;color: gray;'>You haven't started a conversation with anyone yet.</span></center>";
-						}
-						else {
-							document.querySelector('.chathistory').innerHTML = resp;
-							loadchathistoryinterval = setInterval(function(){loadchathistorytchk(0, 12, null);}, 2500);
-						}
-					}
-				}
-				xml.open("GET", "http://content.<?php echo $server; ?>/bscripts/chat/loadchathistory.php?offset="+offset+"&limit="+limit+"&total="+total);
-				xml.withCredentials = true;
-				xml.send();
-			}
-
-			function loadchathistorytchk(offset, limit, total) {
-				var xml = new XMLHttpRequest();
-				var lastmess = encodeURIComponent(document.querySelector('.item_chat .details ul .last_message').innerHTML);
-				xml.onreadystatechange = function() {
-					if(this.status==200 && this.readyState==4) {
-						var resp = this.responseText;
-						if(resp==0) {
-						}
-						else {
-							resp = JSON.parse(resp);
-							var id = resp["uid"];
-							document.querySelector(".item_chat[uid="+id+"]").remove();
-							var prevdata = document.querySelector('.chathistory').innerHTML;
-							document.querySelector('.chathistory').innerHTML = resp["html"]+prevdata;
-						}
-					}
-				}
-				xml.open("GET", "http://content.<?php echo $server; ?>/bscripts/chat/loadchathistory.php?offset="+offset+"&	limit="+limit+"&total="+total+"&lmess="+lastmess);
-				xml.withCredentials = true;
-				xml.send();	
-			}
-
-		function openchat(username, uid, pic, fullname, id) {
-
-			var cid = document.querySelector('#'+id).getAttribute('data_cid');
-			document.querySelector('.chatwindow .top .dp img').setAttribute('src', 'http://content.<?php echo $server; ?>/img_users/'+pic);
-			document.querySelector('.chatwindow .top #chat_username').innerHTML = username;
-			document.querySelector('.chatwindow').setAttribute('data-username', username);
-			document.querySelector('.chatwindow').setAttribute('data-uid', uid);
-			document.querySelector('.chatwindow').setAttribute('data-fullname', fullname);
-			document.querySelector('.chatwindow').setAttribute('data-cid', cid);
-			document.querySelector('.chatwindow').style.display = "block";
-
-			document.querySelector('.onlinefrnds #line').setAttribute('data-value', 'Chat window');
-
-			document.querySelector('.chatwindow .mainchat .maindata ul').innerHTML = "";
-
-			loadchat(uid, '<?php echo $_SESSION['UID']; ?>', username);
-
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.status==200 && this.readyState==4) {
-					
-				}
-			}
-			var formdata = new FormData();
-			formdata.append('uidf', uid);
-			formdata.append('uidm', '<?php echo $_SESSION['UID']; ?>');
-			formdata.append('updatelmess', '1');
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/chat/change_last_message.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-
-			/* get cid + online */
-			getcidinterval = setInterval(function(){
-				var xml = new XMLHttpRequest();
-				var uid = document.querySelector('.chatwindow').getAttribute('data-uid');
-				xml.onreadystatechange = function() {
-					if(this.status==200 && this.readyState==4) {
-						var resp = JSON.parse(this.responseText);
-
-						var cid = resp['cid'];
-						var online = resp['online'];
-
-						document.querySelector('.chatwindow').setAttribute('data-cid', cid);
-
-						if(online==1) {
-							document.querySelector('.chatwindow .top .onlinestatus').style.display = "block";
-						}
-						else {
-							document.querySelector('.chatwindow .top .onlinestatus').style.display = "none";
-						}
-
-					}
-				}
-				var formdata = new FormData();
-				formdata.append('uid', uid);
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/chat/getcid.php");
-				xml.withCredentials = true;
-				xml.send(formdata);
-			}, 800);
-
-			updatelmesinterval = setInterval(function(){
-				var xml = new XMLHttpRequest();
-				xml.onreadystatechange = function() {
-					if(this.status==200 && this.readyState==4) {
-					
-					}
-				}
-				var formdata = new FormData();
-				formdata.append('uidf', uid);
-				formdata.append('uidm', '<?php echo $_SESSION['UID']; ?>');
-				formdata.append('updatelmess', '1');
-				xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/chat/change_last_message.php");
-				xml.withCredentials = true;
-				xml.send(formdata);
-			}, 3500);
-
-		}	
-
-		function removechatwindow(which) {
-			document.querySelector('.chatwindow').style.display = 'none';
-			document.querySelector('.chatwindow').setAttribute('data-username', '');
-			document.querySelector('.chatwindow').setAttribute('data-fullname', '');
-			document.querySelector('.chatwindow').setAttribute('data-cid', '');
-			document.querySelector('.chatwindow').setAttribute('data-uid', '');
-			document.querySelector('.chatwindow').setAttribute('data-pic', '');
-			
-			clearInterval(getcidinterval);
-			clearInterval(updatelmesinterval);
-
-			if(which=='history') {
-				loadchathistory(0, 12, null);
-				document.querySelector('.onlinefrnds #line').setAttribute('data-value', 'Chat History');	
-			}
-			else {
-				document.querySelector('.onlinefrnds #line').setAttribute('data-value', 'Online Friends ('+document.querySelector('.onlinefrnds #line').getAttribute('f_count')+')');
-			}
-		
-		}	
-
-		function loadchat(uid_f, uid_m, username, offset, limit, allmesscount, rand) {
-			document.querySelector('.mainchat .spinner').style.display = "block";
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.status==200 && this.readyState==4) {
-					var resp = this.responseText;
-					document.querySelector('.mainchat .spinner').style.display = "none";
-					
-					var prevdata = document.querySelector('.mainchat .maindata ul').innerHTML;
-					document.querySelector('.mainchat .maindata ul').innerHTML = prevdata+resp;
-					try {
-					document.querySelector('#'+rand).style.display = 'none';
-					}
-					catch(err) {
-
-					}	
-					document.querySelector('#chat_mess_input').focus();
-					document.querySelector('#chat_mess_input').setAttribute('value', '');
-				}
-			}
-			var formdata = new FormData();
-			if(offset==undefined) {
-				offset = 0;
-			}
-
-			if(limit==undefined) {
-				limit = 15;
-			}
-
-			if(allmesscount==undefined) {
-				allmesscount = 0;
-			}
-
-			formdata.append('offset', offset);
-			formdata.append('limit', limit);
-			formdata.append('username', username);
-			formdata.append('allmesscount', allmesscount);
-
-			formdata.append("uid_f", uid_f);
-			formdata.append("uid_m", uid_m);
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/chat/loadchats.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-		}
-
-		/* ------------------------------ */
-
-
-		/* SEARCH ----------- */ 
-
-
-		function searchbar_toggle(e) {
-			if(window.innerWidth>924) {
-				document.querySelector('.ico_search').style.display='none';
-				document.querySelector('.search_bar').style.display='flex';
-			}
-			else {
-				if(e=='open') {
-					var dom = document.querySelector('.ico_search');
-					var dom_dropdown = document.querySelector('.search_resp_dropdown');
-
-					document.querySelector('.nav_main').style.borderBottom = "2px solid var(--hover-color)";
-
-					dom_dropdown.style.display = "flex";
-					var rect = dom.getBoundingClientRect();
-					var rx = (window.innerWidth-rect.x)-(45/2+8);
-					dom_dropdown.style.right = rx.toString()+"px";
-					dom.setAttribute('onclick', 'searchbar_toggle("close")');
-					dom_dropdown.style.width = "285px";
-					dom_dropdown.style.height = "60px";
-				}
-				else {
-					var dom = document.querySelector('.ico_search');
-					var dom_dropdown = document.querySelector('.search_resp_dropdown');
-
-					document.querySelector('.nav_main').style.borderBottom = "1px solid var(--main-border)";
-
-					dom_dropdown.style.display = "none";
-					dom.setAttribute('onclick', 'searchbar_toggle("open")');	
-				}
-			}
-		}
-
-
-		function focussearchbar() {
-			document.querySelector('.search_bar .highlgtr').style.background = "var(--hover-color)"; 
-			document.querySelector('.search_resp_dropdown .highlgtr').style.background = "var(--hover-color)"; 
-		}
-
-		function focussoutsearchbar() {
-			document.querySelector('.search_bar .highlgtr').style.background = "gray";
-			document.querySelector('.search_resp_dropdown .highlgtr').style.background = "gray"; 
-		}
-
-		function search(val, which, offset, withload) {
-			try {
-				document.querySelector(".overlay").style.display = "none";
-				document.querySelector(".search_resp_dropdown").style.display = "none";
-			}
-			catch(err) {
-
-			}
-			var xml = new XMLHttpRequest();
-			document.querySelector('.main_search .bottom .spinner').style.display = "block";
-			document.querySelector('.main_search .bottom .content').innerHTML = "";
-			xml.onreadystatechange = function() {
-				if(this.status==200 && this.readyState==4) {
-					var resp = this.responseText;
-					document.querySelector('.search_overlay').style.display = "block";
-					setTimeout(function(){
-						document.querySelector('.main_search .bottom .spinner').style.display = "none";
-						if(withload==undefined) {
-							document.querySelector('.main_search .bottom .content').innerHTML = resp;
-						}
-						else {
-							document.querySelector('.main_search .bottom .content').innerHTML += resp;
-						}
-					}, 450);
-				}
-			}
-			var formdata = new FormData();
-			formdata.append("query", val);
-			formdata.append("which", which);
-			if(offset==undefined) {
-				formdata.append('offset', 0);
-			}
-			else{
-				formdata.append('offset', offset);
-			}
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/search.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-		}
-
-		function entercapture(e, dom, value) {
-				document.querySelector('.resp_search_input').value = value;
-			if(value.length>0) {
-				if(e.key=='Enter') {
-					search(value, 'people');
-					document.querySelector('.typetoggle option[value=people]').removeAttribute('selected');
-					document.querySelector('.typetoggle #toggle option[value=people]').setAttribute("selected", "1");
-				}	
-
-			}
-
-		}
-
-		function send_freq(domid, uid) {
-			
-			var spinner = document.querySelector('#spb_'+domid+' .send_req .spinner');
-			var icon = document.querySelector('#spb_'+domid+' .send_req i');
-			spinner.style.display = "block";
-			icon.style.display = "none";
-
-			var xml = new XMLHttpRequest();
-
-			xml.onreadystatechange = function() {
-				if(this.status==200 && this.readyState==4) {
-					var resp = this.responseText;
-					setTimeout(function(){
-						spinner.style.display = "none";
-						if(resp==3) {
-							alertmain("You cannot send friend request to yourself.");
-							icon.style.display = "block";
-						}
-						else if(resp==2) {
-							alertmain("You have already sent a friend request to this user.");
-							icon.style.display = "block";
-						}
-						else if(resp==1) {
-							document.querySelector('#spb_'+domid+' .send_req #friend_req_sent').style.display = "block";
-						}
-						else {
-							console.log(resp);
-						}
-
-					},50);
-				}
-			}
-			var formdata = new FormData();
-			formdata.append("uid", uid);
-			formdata.append("which", "sendreq");
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/load/freq.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-
-		}
-
-		function followpage(which, id) {
-			document.querySelector('#spageb_'+id+' .followicon .main').style.display = "none";
-			document.querySelector('#spageb_'+id+' .followicon .spinner').style.display = "block";
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.readyState==4 && this.status==200) {
-					var resp = this.responseText;
-					setTimeout(function(){
-						if(resp==1) {
-							document.querySelector('#spageb_'+id+' .followicon .spinner').style.display = "none";
-							document.querySelector('#spageb_'+id+' .followicon .main').style.display = "flex";
-							document.querySelector('#spageb_'+id+' .followicon .main i').style.color = "var(--hover-color)";
-							document.querySelector('#spageb_'+id+' .followicon .main i').style.fontWeight = "bold";
-							document.querySelector('#spageb_'+id+' .followicon .main i').setAttribute('onclick', 'unfollowpage('+'"'+which+'"'+', '+'"'+id+'"'+')');
-							var count = parseInt(document.querySelector('#spageb_'+id+' .followicon .main .followcount').innerHTML)+1;
-							document.querySelector('#spageb_'+id+' .followicon .main .followcount').innerHTML = count;
-						}
-						else if(resp==0){
-							document.querySelector('#spageb_'+id+' .followicon .spinner').style.display = "none";
-							document.querySelector('#spageb_'+id+' .followicon .main').style.display = "flex";
-							alertmain("Server Error! Please try again later.");
-						}
-						else {
-							alertmain(resp);
-						}
-					}, 40);
-				}
-			}
-			var formdata = new FormData();
-			formdata.append("pid", which);
-			formdata.append('action', 'follow');
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/followpage.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-		}
-
-		function unfollowpage(which, id) {
-			document.querySelector('#spageb_'+id+' .followicon .main').style.display = "none";
-			document.querySelector('#spageb_'+id+' .followicon .spinner').style.display = "block";
-			var xml = new XMLHttpRequest();
-			xml.onreadystatechange = function() {
-				if(this.readyState==4 && this.status==200) {
-					var resp = this.responseText;
-					setTimeout(function(){
-						if(resp==1) {
-							document.querySelector('#spageb_'+id+' .followicon .spinner').style.display = "none";
-							document.querySelector('#spageb_'+id+' .followicon .main').style.display = "flex";
-							document.querySelector('#spageb_'+id+' .followicon .main i').style.color = "#333";
-							var count = parseInt(document.querySelector('#spageb_'+id+' .followicon .main .followcount').innerHTML)-1;
-							document.querySelector('#spageb_'+id+' .followicon .main .followcount').innerHTML = count;
-							document.querySelector('#spageb_'+id+' .followicon .main i').setAttribute('onclick', 'followpage('+'"'+which+'"'+', '+'"'+id+'"'+')');
-						}
-						else if(resp==0) {
-							document.querySelector('#spageb_'+id+' .followicon .spinner').style.display = "none";
-							document.querySelector('#spageb_'+id+' .followicon .main').style.display = "flex";
-							alertmain("Server Error! Please try again later.");
-						}
-						else {
-							alertmain(resp);
-						}
-					}, 40);
-				}
-			}
-			var formdata = new FormData();
-			formdata.append("pid", which);
-			formdata.append('action', 'unfollow');
-			xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/followpage.php");
-			xml.withCredentials = true;
-			xml.send(formdata);
-		}
-
-
-		/* --------------- */ 
-			
+    
 	</script>
-	<!--
-	<script defer src="http://localhost:3005/socket.io/socket.io.js"></script>
-	<script defer src="http://content.<?php echo $server; ?>/bscripts/chat/client.js"></script>
-
-	!-->
-
+<!--
+<script defer src="http://localhost/memelok/chat/socket.io/socket.io.js"></script>
+<script defer src="http://<?php echo $server; ?>/bscripts/chat/client.js"></script>
+!-->
 </body>
 </html>
