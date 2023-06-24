@@ -9,8 +9,6 @@ $query = db::mconnect($dbname)->prepare("SELECT COUNT(*) as count FROM `notifica
 $query->execute();
 $fetch = $query->fetch()['count'];
 
-$server = "localhost/memelok";
-
 /* ------------- */ 
 
 $query = db::mconnect($dbname)->prepare("SELECT pid as pid FROM `pagesfollowing`");

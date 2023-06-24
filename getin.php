@@ -3,19 +3,10 @@
    
    session_start();
    ob_start();
-   
-   /*
-   if($_SERVER['SERVER_NAME']=='::1') {
-   	$server = "localhost/memelok";
-   }
-   else {
-   	$server = $_SERVER['SERVER_NAME'];
-   }*/
-   $server = "localhost/memelok";
-   
+
    if(isset($_COOKIE['LID'])) {
    	if(empty($_COOKIE['LID'])) {
-   		setcookie('LID', "",  time()-3600);
+   		// setcookie('LID', "",  time()-3600);
    	}
    	else {
    		header('Location: http://'.$server.'/');
@@ -471,13 +462,8 @@ function signin_form_submit() {
 						console.log(resp);
 						if(resp=='1') {
 							var server;
-							
-							if(window.innerWidth>650) {
-								server = "http://<?php echo $server; ?>/bscripts/actions/inituser.php";
-							}
-							else {
-								server = "http://m.<?php echo $server; ?>/bscripts/actions/inituser.php";
-							}
+                            server = "http://content.<?php echo $server; ?>/bscripts/actions/inituser.php";
+							// window.innerWidth>650)
 
 							window.location = server;
 						}
@@ -490,7 +476,8 @@ function signin_form_submit() {
 			var formdata = new FormData();
 			formdata.append("login_cred", login_cred);
 			formdata.append("login_pass", login_pass);
-			xml.open("POST", "bscripts/actions/signin.php");
+			xml.withCredentials = true;
+            xml.open("POST", "http://content.<?php echo $server; ?>/bscripts/actions/signin.php");
 			xml.send(formdata);
 
 			return false;

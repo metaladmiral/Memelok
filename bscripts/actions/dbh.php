@@ -2,6 +2,8 @@
 
 date_default_timezone_set("Asia/Kolkata");
 
+$server = "memelok.tf";
+
 class db {
 
 	public function pconnect() {
